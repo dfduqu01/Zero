@@ -1,0 +1,107 @@
+================================================================================
+              MODAL DE VALIDACION DE RECETA - ADMINISTRADOR
+================================================================================
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║  VALIDAR RECETA - PEDIDO #10234                                     [X]      ║
+║                                                                              ║
+║  ┌──────────────────────────────────────────────────────────────────────┐   ║
+║  │ Cliente: Maria Garcia Fernandez                                      │   ║
+║  │ Articulo: Gafas Graduadas Montura Metalica - Dorado                  │   ║
+║  └──────────────────────────────────────────────────────────────────────┘   ║
+║                                                                              ║
+║  ┌────────────────────────────────────┬─────────────────────────────────┐   ║
+║  │ DATOS INGRESADOS POR EL CLIENTE    │  IMAGEN DE RECETA SUBIDA        │   ║
+║  ├────────────────────────────────────┼─────────────────────────────────┤   ║
+║  │                                    │                                 │   ║
+║  │  OJO DERECHO (OD):                 │  ┌─────────────────────────────┐│   ║
+║  │  ┌──────────────────────────────┐  │  │                             ││   ║
+║  │  │         │ Valor              │  │  │                             ││   ║
+║  │  ├─────────┼────────────────────┤  │  │    [Imagen de receta]       ││   ║
+║  │  │ ESF     │ -1.50              │  │  │                             ││   ║
+║  │  │ CIL     │ -0.50              │  │  │    prescripcion_10234_1.jpg ││   ║
+║  │  │ EJE     │  180               │  │  │                             ││   ║
+║  │  │ DP      │  32mm              │  │  │    1024 x 768 px            ││   ║
+║  │  └─────────┴────────────────────┘  │  │                             ││   ║
+║  │                                    │  └─────────────────────────────┘│   ║
+║  │  OJO IZQUIERDO (OS):               │                                 │   ║
+║  │  ┌──────────────────────────────┐  │  Controles de zoom:             │   ║
+║  │  │         │ Valor              │  │  ┌───┐ ┌───┐ ┌──────────┐      │   ║
+║  │  ├─────────┼────────────────────┤  │  │ + │ │ - │ │ Ajustar  │      │   ║
+║  │  │ ESF     │ -1.75              │  │  └───┘ └───┘ └──────────┘      │   ║
+║  │  │ CIL     │ -0.75              │  │                                 │   ║
+║  │  │ EJE     │  175               │  │  [Descargar imagen original]    │   ║
+║  │  │ DP      │  31mm              │  │                                 │   ║
+║  │  └─────────┴────────────────────┘  │  Subida: 28/10/2025 14:25       │   ║
+║  │                                    │                                 │   ║
+║  │  Fecha de receta: 15/10/2025      │                                 │   ║
+║  │  Nombre del doctor: Dr. Sanchez   │                                 │   ║
+║  │                                    │                                 │   ║
+║  └────────────────────────────────────┴─────────────────────────────────┘   ║
+║                                                                              ║
+║  ╔════════════════════════════════════════════════════════════════════════╗ ║
+║  ║ VERIFICACION                                                           ║ ║
+║  ╠════════════════════════════════════════════════════════════════════════╣ ║
+║  ║                                                                        ║ ║
+║  ║  ☐ Los valores ESF, CIL, EJE coinciden con la imagen de receta        ║ ║
+║  ║  ☐ La distancia pupilar (DP) es correcta                              ║ ║
+║  ║  ☐ La receta esta vigente (menos de 2 anos de antiguedad)             ║ ║
+║  ║  ☐ La imagen es legible y clara                                       ║ ║
+║  ║  ☐ El sello y firma del doctor son visibles                           ║ ║
+║  ║                                                                        ║ ║
+║  ╚════════════════════════════════════════════════════════════════════════╝ ║
+║                                                                              ║
+║  ╔════════════════════════════════════════════════════════════════════════╗ ║
+║  ║ NOTAS DEL ADMINISTRADOR                                                ║ ║
+║  ╠════════════════════════════════════════════════════════════════════════╣ ║
+║  ║                                                                        ║ ║
+║  ║  ┌──────────────────────────────────────────────────────────────────┐ ║ ║
+║  ║  │                                                                  │ ║ ║
+║  ║  │ Agregar comentarios sobre la validacion...                       │ ║ ║
+║  ║  │                                                                  │ ║ ║
+║  ║  │                                                                  │ ║ ║
+║  ║  │                                                                  │ ║ ║
+║  ║  └──────────────────────────────────────────────────────────────────┘ ║ ║
+║  ║                                                                        ║ ║
+║  ║  (Estas notas se enviaran al cliente si se rechaza la receta)         ║ ║
+║  ║                                                                        ║ ║
+║  ╚════════════════════════════════════════════════════════════════════════╝ ║
+║                                                                              ║
+║  ┌──────────────────────────────────────────────────────────────────────┐   ║
+║  │                                                                      │   ║
+║  │                [Rechazar Receta]              [Aprobar Receta]      │   ║
+║  │                                                                      │   ║
+║  └──────────────────────────────────────────────────────────────────────┘   ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+GLOSARIO DE TERMINOS:
+- ESF (Esfera): Correccion para miopia (-) o hipermetropia (+)
+- CIL (Cilindro): Correccion para astigmatismo
+- EJE (Eje): Orientacion del cilindro (0-180 grados)
+- DP (Distancia Pupilar): Distancia entre las pupilas en milimetros
+- OD (Oculus Dexter): Ojo derecho
+- OS (Oculus Sinister): Ojo izquierdo
+
+ACCIONES AL APROBAR:
+- El estado de la receta cambia a "Validada"
+- Se envia notificacion por email al cliente confirmando la validacion
+- El pedido puede proceder a preparacion y envio
+- Las notas del administrador se guardan internamente
+
+ACCIONES AL RECHAZAR:
+- El estado de la receta cambia a "Rechazada"
+- Se envia email al cliente con las notas explicando el motivo
+- El cliente puede subir una nueva receta o corregir los datos
+- El pedido permanece en estado "Pendiente" hasta recibir receta valida
+
+VALIDACIONES DEL SISTEMA:
+- Rango ESF: -20.00 a +20.00
+- Rango CIL: -6.00 a +6.00
+- Rango EJE: 0 a 180 grados
+- Rango DP: 20mm a 80mm
+- Formatos de imagen aceptados: JPG, PNG, PDF
+- Tamano maximo de imagen: 5MB
+
+================================================================================
