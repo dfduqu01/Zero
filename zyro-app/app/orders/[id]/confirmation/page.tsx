@@ -82,14 +82,6 @@ export default async function OrderConfirmationPage({
   const viewAreas = viewAreasResult.data || [];
   const prescriptionTypes = prescriptionTypesResult.data || [];
 
-  // Debug: Log data to see what we have
-  console.log('📦 Order Items:', orderItems?.length);
-  console.log('💊 Prescriptions fetched:', prescriptions.length);
-  console.log('👓 Lens Types:', lensTypes.length);
-  console.log('🔍 Lens Indexes:', lensIndexes.length);
-  console.log('👁️ View Areas:', viewAreas.length);
-  console.log('📋 Prescription Types:', prescriptionTypes.length);
-
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-3xl mx-auto px-4">
@@ -192,14 +184,9 @@ export default async function OrderConfirmationPage({
                         </div>
                       </div>
 
-                      {/* DEBUG: Show if prescription exists */}
-                      {prescription && <p className="text-xs text-gray-500 mt-2">✓ Prescription data found</p>}
-                      {!prescription && <p className="text-xs text-red-500 mt-2">⚠ No prescription data</p>}
-
                       {/* Show prescription details using PrescriptionSummary */}
                       {prescription && (
                         <div className="mt-3 pt-3 border-t border-gray-200">
-                          <p className="text-xs mb-2 text-gray-500">Prescription IDs: type={prescription.prescription_type_id?.substring(0,8)}, lens={prescription.lens_type_id?.substring(0,8)}</p>
                           <PrescriptionSummary
                             prescription={{
                               prescription_type_id: prescription.prescription_type_id,
