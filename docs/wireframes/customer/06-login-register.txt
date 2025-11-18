@@ -1,6 +1,10 @@
 ================================================================================
                       ZERO - PÁGINA DE INICIO DE SESIÓN/REGISTRO
 ================================================================================
+NOTE: Esta pantalla también se muestra como modal durante el checkout para
+usuarios que no han iniciado sesión. Después del login/registro exitoso,
+el carrito de localStorage se transfiere automáticamente a la base de datos.
+================================================================================
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │ [LOGO]  Gafas de Sol | Gafas con Receta  [Buscar...] 🔍 🛒(2) 👤│

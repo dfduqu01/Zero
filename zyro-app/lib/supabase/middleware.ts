@@ -47,8 +47,29 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const user = data?.claims;
 
+  // Define public routes that don't require authentication
+  const publicRoutes = [
+    '/',
+    '/products',
+    '/about',
+    '/contact',
+    '/terms',
+    '/privacy',
+    '/cart', // Important for localStorage cart
+  ];
+
+  // Check if current path is a public route
+  const isPublicRoute = publicRoutes.some(route =>
+    request.nextUrl.pathname === route ||
+    request.nextUrl.pathname.startsWith(route + '/')
+  );
+
+  // Only redirect to login if:
+  // - Not a public route
+  // - Not already on auth pages
+  // - User is not authenticated
   if (
-    request.nextUrl.pathname !== "/" &&
+    !isPublicRoute &&
     !user &&
     !request.nextUrl.pathname.startsWith("/login") &&
     !request.nextUrl.pathname.startsWith("/auth")

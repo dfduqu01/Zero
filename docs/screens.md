@@ -177,9 +177,16 @@ This document outlines all screens, pages, and UI components needed for the ZERO
 - Order summary (read-only)
 - Edit cart link
 
+**Step 1.5: Authentication Gate** (NEW)
+- If user not logged in:
+  - Show modal or inline section
+  - "Iniciar Sesión" button
+  - "Crear Cuenta" button
+  - Message: "Crea tu cuenta para completar la compra"
+- If user logged in: Skip to Step 2
+
 **Step 2: Shipping Address**
 - For logged-in users: Select from saved addresses or add new
-- For guest users: Address form
 - Address form fields:
   - **Country** (dropdown - **REQUIRED** for international shipping)
   - Full name
@@ -213,6 +220,19 @@ This document outlines all screens, pages, and UI components needed for the ZERO
 
 **Progress Indicator**: Shows current step (1/4, 2/4, etc.)
 
+#### 10.5 Checkout Authentication Modal (NEW)
+**Purpose**: Require registration/login before checkout
+**Trigger**: User clicks "Proceed to Checkout" without being logged in
+**Key Elements**:
+- Modal overlay
+- Two tabs: "Iniciar Sesión" and "Crear Cuenta"
+- Login tab: Email, password, "Forgot password?" link
+- Registration tab: Name, email, phone, country, password
+- After successful login/registration:
+  - Transfer localStorage cart to database
+  - Redirect to checkout Step 2 (Shipping Address)
+- "Tu carrito se guardará" reassurance message
+
 #### 11. Order Confirmation Page
 **Purpose**: Confirm successful order placement
 **Key Elements**:
@@ -227,55 +247,104 @@ This document outlines all screens, pages, and UI components needed for the ZERO
 - "View Order Details" button
 - "Continue Shopping" button
 - Email confirmation notice
-- Create account option (if guest checkout)
 
 ---
 
 ### Modals & Drawers
 
-#### 12. Prescription Modal
-**Purpose**: Collect prescription details
-**Trigger**: From Product Detail page or Cart
-**Key Elements**:
-- Modal header: "Add Prescription"
-- Toggle: "Without Prescription" / "With Prescription"
-- Prescription form (when "With Prescription" selected):
-  - **Right Eye (OD)**:
-    - SPH (Sphere): -20.00 to +20.00
-    - CYL (Cylinder): -4.00 to +4.00
-    - AXIS: 0-180
-  - **Left Eye (OS)**:
-    - SPH, CYL, AXIS (same ranges)
-  - **PD (Pupillary Distance)**:
-    - Single PD or Dual (OD/OS)
-    - Range: 20-80mm
-  - **ADD** (optional for progressive lenses)
-- Image upload section:
-  - Drag & drop or click to upload
-  - Accept JPG, PNG, PDF (max 5MB)
-  - Preview uploaded image
-  - Remove uploaded image button
-- Field validation with error messages
-- "Save" and "Cancel" buttons
+#### 12. Prescription Configuration (Multi-Step Form) ✨ UPDATED Nov 7, 2025
+**Purpose**: Collect prescription details through guided flow
+**Location**: Inline on Product Detail page (not modal)
+**Type**: Progressive disclosure multi-step form
 
-#### 13. Lens Treatments Modal/Section
-**Purpose**: Select optional lens treatments
-**Trigger**: From Product Detail page or Cart
-**Key Elements**:
-- Modal header: "Select Lens Treatments"
-- Treatment options (checkboxes with descriptions):
-  - Photochromatic (transitions) - $XX.XX
-  - Anti-reflective (AR) coating - $XX.XX
-  - Blue-light blocking coating - $XX.XX
-  - UV protection - $XX.XX
-- Each option includes:
+**Initial State**:
+- "+ Configurar Lentes" button
+
+**Step 1: Initial Choice**
+- Header: "Configuración de Lentes"
+- Two options:
+  - **Solo el Marco (Frame Only)**
+    - Description: "Sin receta o lentes de protección"
+  - **Agregar Lentes con Receta**
+    - Description: "Lentes graduados según tu prescripción"
+- Navigation: "Quitar" (reset)
+
+**Step 2A: Prescription Type** (if "Agregar Lentes con Receta")
+- Header: "Tipo de Prescripción"
+- Three options (from prescription_types table):
+  - **Single Vision** - "One field of vision (near or distance)"
+  - **Progressive** - "Multiple vision zones in one lens"
+  - **Non-Prescription** - "Cosmetic or protective use only" (redirects to Step 2B)
+- Navigation: "← Atrás" | "X"
+
+**Step 2B: Formula Entry** (if Single Vision or Progressive)
+- Header: "Ingresa tu Prescripción"
+- Current type displayed: "Tipo: Single Vision/Progressive"
+- Form fields:
+  - **Ojo Derecho (OD)**: SPH, CYL, AXIS, ADD (progressive only)
+  - **Ojo Izquierdo (OS)**: SPH, CYL, AXIS, ADD (progressive only)
+  - **PD (Distancia Pupilar)**: Single value (20-80mm)
+- **OR** Image upload alternative:
+  - "O sube una imagen de tu receta"
+  - File input (JPG, PNG, PDF - max 5MB)
+  - Image preview if uploaded
+- Button: "Siguiente"
+- Navigation: "← Atrás" | "X"
+
+**Step 3: Lens Type Selection**
+- Header: "Tipo de Lente"
+- Current prescription displayed (if applicable)
+- Radio button list showing appropriate lens types:
+  - **Frame Only flow**: Frame Only, Blue Light Block, Standard Clear, Photochromatic
+  - **Prescription flow**: Blue Light Block, Standard Clear, Photochromatic, Anti-Reflective, UV Protection
+- Each option shows:
   - Name
   - Description
-  - Additional cost
-  - Checkbox
-- Running total update as options selected
-- "Add to Cart" or "Update" button
-- "Skip" or "Cancel" button
+  - Price modifier (if > $0): "+$XX.XX"
+- Button: "Siguiente" (Frame Only) or "Completar" (prescription flow continues)
+- Navigation: "← Atrás" | "X"
+
+**Step 4: Lens Index** (Prescription types only)
+- Header: "Índice de Lente"
+- Note: "* Todos los lentes incluyen anti-reflejante y resistencia a rayones"
+- Radio button list (from lens_indexes table):
+  - Mid-Index (1.50) - $0
+  - High-Index (1.60) - +$50
+  - Ultra-Thin (1.67) - +$100 (if active)
+  - Ultra-Thin Plus (1.74) - +$150 (if active)
+- Each shows name, description, price
+- Button: "Siguiente" (if Progressive) or "Completar" (if Single Vision)
+- Navigation: "← Atrás" | "X"
+
+**Step 5: View Area** (Progressive only)
+- Header: "Área de Visión"
+- Radio button list (from view_areas table):
+  - Standard View - FREE or $0
+  - 40% Broader View - +$75
+- Each shows name, description, price
+- Button: "Completar"
+- Navigation: "← Atrás" | "X"
+
+**Price Display**:
+- Real-time subtotal updates shown in product pricing section
+- Itemized breakdown:
+  - Base price: $XX.XX
+  - + Tipo de lente: $XX.XX (if applicable)
+  - + Índice de lente: $XX.XX (if applicable)
+  - + Área de visión: $XX.XX (if applicable)
+  - = Total: $XX.XX
+
+**Technical Notes**:
+- Data sources: prescription_types, lens_types, lens_indexes, view_areas tables
+- All pricing is admin-editable
+- RLS policies ensure only active items are shown
+- Validation happens on each step before "Siguiente"
+
+#### 13. Lens Treatments Section (⚠️ DEPRECATED)
+**Status**: Merged into lens_types table
+**Note**: Legacy treatments still display from lens_treatments table for backward compatibility
+- Will be phased out in cleanup
+- New lens types handle both frame-only and prescription lens options
 
 #### 14. Mobile Filter Drawer
 **Purpose**: Show filters on mobile devices
@@ -478,6 +547,8 @@ This document outlines all screens, pages, and UI components needed for the ZERO
 ---
 
 ## Admin Screens
+
+**Language**: All admin interface content must be in Spanish
 
 ### Admin Access & Navigation
 

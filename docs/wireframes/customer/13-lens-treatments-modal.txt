@@ -1,5 +1,31 @@
 ================================================================================
                     ZERO - MODAL DE TRATAMIENTOS PARA LENTES
+                              ⚠️ DEPRECATED (Nov 7, 2025)
+================================================================================
+
+⚠️ DEPRECATION NOTICE ⚠️
+
+This wireframe is DEPRECATED and no longer reflects the current system design.
+
+**Reason**: Lens treatments have been restructured and merged into the `lens_types`
+table as part of the multi-step prescription flow.
+
+**Current Implementation**:
+- Lens types (including former treatments like Photochromatic, Anti-Reflective,
+  Blue Light Block, etc.) are now presented as part of the multi-step prescription
+  configuration flow (see wireframe 12-prescription-configuration.txt)
+- These options appear inline on the product detail page, not in a separate modal
+- All lens types are now admin-editable through the `lens_types` database table
+
+**Migration**: November 7, 2025
+- New structure: prescription_types, lens_types, lens_indexes, view_areas tables
+- Old `lens_treatments` table marked for cleanup but kept for backward compatibility
+- See DATABASE-SCHEMA.md v2.0 and docs/Prescription-flow.md for current design
+
+**Do not implement this wireframe**. Reference wireframe 12 for the current design.
+
+================================================================================
+                        ORIGINAL WIREFRAME (FOR REFERENCE)
 ================================================================================
 
 ┌─────────────────────────────────────────────────────────────────────────────┐

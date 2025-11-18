@@ -15,7 +15,7 @@ Empezando desde **cero**: cero intermediarios, cero complicaciones, cero límite
 **Authentication**
 - User registration and login (includes **country field** in registration)
 - Account management (profile includes country)
-- Guest checkout option (requires country for shipping)
+- Login required at checkout (browse freely with localStorage cart)
 
 **Product Catalog & Browsing**
 - Browse optical products with intuitive interface
@@ -34,6 +34,9 @@ Empezando desde **cero**: cero intermediarios, cero complicaciones, cero límite
 - Upload prescription image for validation
 - Prescription format validation
 - Select lens treatments (photochromatic, anti-reflective, blue-coat)
+- Registration/login gate before payment
+- localStorage cart persistence for unauthenticated users
+- Automatic cart transfer on registration
 - **International shipping address management** (add/edit/save addresses with **required country field**)
 - **Country selection required** for calculating shipping costs across Latin American countries
 - Complete checkout and online payment (USD only)
@@ -89,7 +92,7 @@ Empezando desde **cero**: cero intermediarios, cero complicaciones, cero límite
 
 **Inventory Management**
 - Track stock levels
-- Weekly automated sync with ERP endpoint
+- Every 2 days automated sync with ERP endpoint
 - Process paginated JSON product data from ERP
 - Automatic product hiding when out of stock
 
@@ -116,7 +119,7 @@ Empezando desde **cero**: cero intermediarios, cero complicaciones, cero límite
 - Optimized image delivery
 
 **ERP Integration**
-- Weekly scheduled job to sync inventory from ERP endpoint
+- Every 2 days scheduled job to sync inventory from ERP endpoint
 - Handle paginated JSON responses
 - Update product stock levels automatically
 

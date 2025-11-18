@@ -2,7 +2,7 @@
 
 ## Project Overview
 **Product Name**: ZERO
-**Version**: MVP 1.0
+**Version**: MVP 1.1 (Updated Nov 6, 2025)
 **Platform**: B2C E-commerce para Productos Ópticos
 **Target Market**: Latinoamérica (español)
 **Tech Stack**: Next.js + Supabase
@@ -10,6 +10,8 @@
 **Repository**: GitHub
 **Authentication**: Supabase Auth
 **UI Components**: shadcn/ui + Tailwind CSS
+
+**Latest Update**: ✨ Enhanced Prescription System implemented with multi-step flow, lens configuration options, and dynamic pricing (Section 3.2)
 
 ## Brand Story
 Durante más de 25 años hemos conectado fábricas, marcas y ópticas en toda Latinoamérica. Tras décadas trabajando B2B, surge la pregunta: ¿Por qué el consumidor final sigue tan lejos de todo esto?
@@ -30,7 +32,7 @@ ZERO es la evolución natural de una historia familiar, llevando experiencia y c
 - Product descriptions, categories, and navigation in Spanish
 - Email notifications in Spanish
 - Error messages and form validations in Spanish
-- Admin interface can be in English or Spanish (to be decided)
+- Admin interface in Spanish
 - Date formats: DD/MM/YYYY (Latin American standard)
 
 ## International Shipping & Country Selection
@@ -57,7 +59,9 @@ ZERO es la evolución natural de una historia familiar, llevando experiencia y c
 - Login/logout functionality
 - Password reset via Supabase Auth email
 - Basic profile management (name, email, phone, **country**) stored in Supabase
-- Guest checkout option (collect minimal info including **country** without account creation)
+- Login required at checkout - users can browse and add to cart, but must register/login before payment
+- Cart data stored in localStorage/cookies until user registers
+- Quick registration flow at checkout (5 fields max)
 
 ### 1.2 Admin Authentication
 - **Priority**: P0 (Critical)
@@ -112,37 +116,103 @@ ZERO es la evolución natural de una historia familiar, llevando experiencia y c
 - Session-based cart for guest users
 - Display selected prescription and lens treatments per item
 
-### 3.2 Prescription Management
+### 3.2 Prescription Management ✨ RESTRUCTURED (Nov 7, 2025)
 - **Priority**: P0 (Critical)
-- Toggle: "Without Prescription" or "With Prescription"
-- Prescription entry form with validated fields:
-  - **Right Eye (OD)**: SPH, CYL, AXIS
-  - **Left Eye (OS)**: SPH, CYL, AXIS
-  - **PD (Pupillary Distance)**: Single or dual (OD/OS)
-  - ADD (for progressive lenses) - optional
-- Field validation:
-  - SPH range: -20.00 to +20.00
-  - CYL range: -4.00 to +4.00
-  - AXIS range: 0-180
-  - PD range: 20-80mm
-- Upload prescription image (JPG, PNG, PDF - max 5MB)
-- Store prescription data in Supabase Storage
-- Associate prescription with cart item
+- **Status**: ✅ IMPLEMENTED with admin-editable table structure
 
-### 3.3 Lens Treatments
-- **Priority**: P0 (Critical)
-- Display available lens treatment options:
-  - Photochromatic (transitions)
-  - Anti-reflective (AR) coating
-  - Blue-light blocking coating
-  - UV protection
-- Multi-select treatment options
-- Display additional cost per treatment
+**Database Architecture**:
+- **4 Admin-Editable Tables** for complete flexibility:
+  1. `prescription_types` - Type of prescription (Single Vision, Progressive, Non-Prescription)
+  2. `lens_types` - Lens materials/features (Blue Light, Photochromatic, Anti-Reflective, etc.)
+  3. `lens_indexes` - Lens thickness options (1.50, 1.60, 1.67, 1.74)
+  4. `view_areas` - Progressive lens view areas (Standard, 40% Broader)
+
+**Multi-Step Prescription Flow**:
+
+**Step 1: Initial Choice**
+- **Frame Only** → Select lens type (non-prescription options)
+- **Add Prescription Lenses** → Continue to prescription type
+
+**Step 2: Prescription Type Selection** (if Add Prescription)
+- **Single Vision** - One focal distance (near/intermediate/distance)
+- **Progressive** - Multi-focal lenses in one lens
+- **Non-Prescription** - Redirects to Frame Only flow
+
+**Step 3: Formula Entry** (Single Vision & Progressive)
+- **Right Eye (OD)**: SPH, CYL, AXIS
+- **Left Eye (OS)**: SPH, CYL, AXIS
+- **PD (Pupillary Distance)**: Single or dual
+- **ADD** (for progressive lenses)
+- **Image Upload Alternative**: JPG, PNG, WebP, PDF (max 5MB)
+- Field validation:
+  - SPH: -20.00 to +20.00
+  - CYL: -4.00 to +4.00
+  - AXIS: 0-180°
+  - PD: 20-80mm
+
+**Step 4: Lens Type Selection**
+- Shows appropriate lens types based on flow:
+  - **Frame Only flow**: Frame Only, Blue Light Block, Standard Clear, Photochromatic
+  - **Prescription flow**: Blue Light Block, Standard Clear, Photochromatic, Anti-Reflective, UV Protection
+- Each lens type has:
+  - Name, description
+  - Price modifier
+  - Applicability flags (applies_to_without_rx, applies_to_with_rx)
+
+**Step 5: Lens Index** (Prescription only)
+- **Mid-Index (1.50)** - Standard plastic lens - $0
+- **High-Index (1.60)** - 20% thinner and lighter - +$50
+- **Ultra-Thin (1.67)** - 30% thinner (inactive/future) - +$100
+- **Ultra-Thin Plus (1.74)** - 40% thinner (inactive/future) - +$150
+
+**Step 6: View Area** (Progressive only)
+- **Standard View** - Traditional progressive corridor - $0
+- **40% Broader View** - Wider zones for computer work - +$75
+
+**Real-Time Price Calculation**:
+- Base product price
+- + Lens type cost (from lens_types table)
+- + Lens index cost (from lens_indexes table)
+- + View area cost (from view_areas table)
+- + Additional treatments cost (deprecated/legacy)
+- = Total with itemized breakdown
+
+**Admin Capabilities**:
+- Add/edit/deactivate prescription types
+- Add/edit/deactivate lens types with pricing
+- Add/edit/deactivate lens indexes with pricing
+- Add/edit/deactivate view areas with pricing
+- Full control over display order
+- Update descriptions and names
+
+**Validation System**:
+- Client-side validation with clear error messages
+- Database foreign key constraints
+- Required fields based on prescription type
+- Formula OR image required for RX types
+
+**Technical Implementation**:
+- `/lib/types/prescription.ts` - Complete type system
+- `/lib/utils/prescription-helpers.ts` - Validation & pricing
+- `/components/PrescriptionForm.tsx` - Multi-step UI
+- `/components/PrescriptionSummary.tsx` - Cart display
+- Database: 4 admin tables with RLS policies
+- Migration: `20251107000000_restructure_prescription_system.sql`
+
+### 3.3 Lens Treatments (DEPRECATED - Merged into lens_types)
+- **Status**: ⚠️ DEPRECATED - Use lens_types table instead
+- Legacy `lens_treatments` table exists for backward compatibility
+- Will be removed in future cleanup phase
 - Calculate total with treatments applied
 
 ### 3.4 Checkout Flow
 - **Priority**: P0 (Critical)
 - **Step 1**: Review cart items
+- **Step 1.5**: User Authentication Gate
+  - If not logged in, show registration/login modal
+  - Two options: "Already have account? Login" or "New customer? Create account"
+  - Quick registration: name, email, phone, country, password
+  - After successful auth: transfer localStorage cart to database
 - **Step 2**: Shipping information
   - Add/edit shipping address form with **required country selection**
   - **Country dropdown**: List of Latin American countries we ship to
@@ -168,6 +238,18 @@ ZERO es la evolución natural de una historia familiar, llevando experiencia y c
   - Display order number
   - Order summary with all details including destination country
   - Send order confirmation email
+
+### 3.5 localStorage Cart Management
+- **Priority**: P0 (Critical)
+- Cart stored in browser localStorage for unauthenticated users
+- Cart structure: JSON array of { product_id, quantity, prescription, treatments }
+- Maximum cart size: 50 items
+- Cart expiry: 30 days (client-side)
+- On registration/login:
+  - Transfer localStorage cart to database
+  - Merge with existing database cart (if any)
+  - Clear localStorage cart
+  - Conflict resolution: keep higher quantity for duplicates
 
 ---
 

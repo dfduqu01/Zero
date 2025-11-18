@@ -9,16 +9,52 @@ export async function GET(request: NextRequest) {
   const type = searchParams.get("type") as EmailOtpType | null;
   const next = searchParams.get("next") ?? "/";
 
+  // Security: Validate redirect URL to prevent open redirect attacks
+  const allowedRedirects = [
+    "/",
+    "/dashboard",
+    "/profile",
+    "/checkout",
+    "/cart",
+    "/orders",
+    "/products",
+  ];
+
+  // Only allow relative paths from our allowlist
+  const safeNext = allowedRedirects.includes(next) ? next : "/";
+
   if (token_hash && type) {
     const supabase = await createClient();
 
-    const { error } = await supabase.auth.verifyOtp({
+    const { data, error } = await supabase.auth.verifyOtp({
       type,
       token_hash,
     });
-    if (!error) {
+
+    if (!error && data.user) {
+      // After email confirmation, create user profile if it doesn't exist
+      const { data: existingProfile } = await supabase
+        .from("users")
+        .select("id")
+        .eq("id", data.user.id)
+        .single();
+
+      if (!existingProfile) {
+        // Get user metadata from signup
+        const metadata = data.user.user_metadata;
+
+        // Create profile
+        await supabase.from("users").insert({
+          id: data.user.id,
+          name: metadata?.name || "",
+          phone: metadata?.phone || "",
+          country: metadata?.country || "México",
+          is_admin: false,
+        });
+      }
+
       // redirect user to specified redirect URL or root of app
-      redirect(next);
+      redirect(safeNext);
     } else {
       // redirect the user to an error page with some instructions
       redirect(`/auth/error?error=${error?.message}`);

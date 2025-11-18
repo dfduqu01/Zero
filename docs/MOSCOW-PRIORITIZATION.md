@@ -1,8 +1,9 @@
 # ZERO E-COMMERCE PLATFORM - MoSCoW PRIORITIZATION
 
-**Version**: MVP 1.0
-**Date**: November 2025
+**Version**: MVP 1.1
+**Date**: November 6, 2025 (Updated)
 **Project**: ZERO - B2C E-commerce para Productos Ópticos
+**Status**: Phase 1 Complete | Phase 2 Partial | Phase 3 Next
 
 ---
 
@@ -22,62 +23,78 @@
 - **[M]** Customer registration/login (email/password via Supabase Auth)
 - **[M]** Admin login with role-based access (RLS policies)
 - **[M]** Password reset functionality
-- **[M]** Guest checkout (minimal info without account creation)
+- **[M]** Login required at checkout (browse freely, cart in localStorage)
+- **[M]** localStorage cart management and transfer on registration
 - **[M]** Basic profile management (name, email, phone, country)
 - **[M]** Country field REQUIRED in all address forms
 
-### 2. Product Catalog & Discovery
+### 2. Product Catalog & Discovery (✅ Phase 1 Complete - Nov 6, 2025)
 
-- **[M]** Product listing page (responsive grid layout)
-- **[M]** Product detail page with:
+- **[M]** ✅ Product listing page (responsive grid layout)
+- **[M]** ✅ Product detail page with:
   - Multiple images (3-5) with zoom
   - Name, SKU, brand, price (USD)
   - Description & specifications
   - Frame dimensions (lens width, bridge, temple)
   - Stock status
-- **[M]** Product categories (Gafas de Sol, Gafas con Receta)
-- **[M]** Auto-hide out-of-stock products
-- **[M]** Text-based search functionality
-- **[M]** Filter products by:
+- **[M]** ✅ Product categories (Gafas de Sol, Gafas con Receta)
+- **[M]** ✅ Auto-hide out-of-stock products
+- **[M]** ⏳ Text-based search functionality (TODO)
+- **[M]** ⏳ Filter products by: (TODO)
   - Brand (Ray-Ban, Oakley, etc.)
   - Lens size
   - Material (acetate, metal, titanium)
   - Frame shape (round, square, aviator, cat-eye)
-- **[M]** Category-based navigation
-- **[M]** Basic sorting (price low-to-high, high-to-low, newest)
+- **[M]** ✅ Category-based navigation
+- **[M]** ⏳ Basic sorting (price low-to-high, high-to-low, newest) (TODO)
 
 ### 3. Shopping Cart & Checkout
 
 **Cart Features:**
-- **[M]** Shopping cart (add/remove/update quantities)
-- **[M]** Display cart subtotal
-- **[M]** Persist cart for logged-in users (Supabase)
-- **[M]** Session-based cart for guests
-- **[M]** Display prescription & lens treatments per item
+- **[M]** ✅ Shopping cart (add/remove/update quantities)
+- **[M]** ✅ Display cart subtotal with prescription & treatments pricing
+- **[M]** ⏳ Persist cart for logged-in users (Supabase) - Phase 2
+- **[M]** ✅ localStorage-based cart for unauthenticated users (enhanced with prescription data)
+- **[M]** ⏳ Cart transfer from localStorage to database on registration/login - Phase 2
+- **[M]** ⏳ Cart merge logic (handle duplicate items) - Phase 2
+- **[M]** ✅ Display prescription & lens treatments per item (with PrescriptionSummary component)
 
-**Prescription Management:**
-- **[M]** Toggle: "Without Prescription" or "With Prescription"
-- **[M]** Entry form with validated fields (OD, OS: SPH, CYL, AXIS, PD, ADD)
-- **[M]** Field validation (SPH: -20 to +20, CYL: -4 to +4, AXIS: 0-180, PD: 20-80mm)
-- **[M]** Upload prescription image (JPG, PNG, PDF - max 5MB)
-- **[M]** Store in Supabase Storage
-- **[M]** Associate with cart item
+**Prescription Management (✅ RESTRUCTURED - Implemented Nov 7, 2025):**
+- **[M]** ✅ Admin-editable table structure (4 separate tables):
+  - `prescription_types` - Single Vision, Progressive, Non-Prescription
+  - `lens_types` - Frame Only, Blue Light, Photochromatic, Anti-Reflective, etc.
+  - `lens_indexes` - Mid-Index (1.50), High-Index (1.60), Ultra-Thin (1.67/1.74)
+  - `view_areas` - Standard View, 40% Broader View
+- **[M]** ✅ Multi-step prescription flow with Frame Only option
+- **[M]** ✅ Step 1: Frame Only OR Add Prescription Lenses
+- **[M]** ✅ Step 2: Prescription type selection (Single Vision/Progressive/Non-Prescription)
+- **[M]** ✅ Step 3: Formula entry (SPH, CYL, AXIS, PD, ADD) OR image upload
+- **[M]** ✅ Step 4: Lens type selection (context-aware based on flow)
+- **[M]** ✅ Step 5: Lens index selection (for prescription types)
+- **[M]** ✅ Step 6: View area selection (for progressive only)
+- **[M]** ✅ Progressive disclosure UI with back/next navigation
+- **[M]** ✅ Real-time price calculation with itemized breakdown
+- **[M]** ✅ Field validation (SPH: -20 to +20, CYL: -4 to +4, AXIS: 0-180, PD: 20-80mm)
+- **[M]** ✅ Image upload (JPG, PNG, PDF - max 5MB, compressed to <500KB)
+- **[M]** ✅ Client-side image compression before upload
+- **[M]** ✅ Associate with cart item (localStorage for unauthenticated users)
+- **[M]** ✅ Database: 4 admin tables with RLS policies and foreign keys
+- **[M]** ✅ Migration: 20251107000000_restructure_prescription_system.sql
 
-**Lens Treatments:**
-- **[M]** Display options (Photochromatic, AR coating, Blue-light, UV)
-- **[M]** Multi-select treatments
-- **[M]** Display additional cost per treatment
-- **[M]** Calculate total with treatments
+**Lens Treatments (⚠️ DEPRECATED):**
+- **[M]** ⚠️ Merged into lens_types table
+- **[M]** ⚠️ Legacy lens_treatments table exists for backward compatibility
+- **[M]** ⏳ Cleanup phase needed (remove old tables and ENUMs)
 
-**Checkout Flow:**
-- **[M]** Step 1: Review cart
-- **[M]** Step 2: Shipping address (with REQUIRED country dropdown)
-- **[M]** Step 3: Shipping method & cost (varies by country)
-- **[M]** Step 4: Payment (PagueloFacil integration - USD)
-- **[M]** Step 5: Order confirmation
-- **[M]** Address form with required fields including Country
-- **[M]** International shipping cost calculation
-- **[M]** Order confirmation email (Spanish)
+**Checkout Flow (⏳ Phase 3 - NOT STARTED):**
+- **[M]** ⏳ Step 1: Review cart
+- **[M]** ⏳ Step 2: Shipping address (with REQUIRED country dropdown)
+- **[M]** ⏳ Step 3: Shipping method & cost (varies by country)
+- **[M]** ⏳ Step 4: Payment (PagueloFacil integration - USD)
+- **[M]** ⏳ Step 5: Order confirmation
+- **[M]** ⏳ Address form with required fields including Country
+- **[M]** ⏳ International shipping cost calculation
+- **[M]** ⏳ Order confirmation email (Spanish)
 
 ### 4. Admin - Product Management
 
@@ -275,20 +292,34 @@
 
 ## Launch Criteria (Definition of Done for MVP)
 
-- ✅ Customer can browse products (with filters & search)
-- ✅ Customer can add prescription glasses to cart with prescription data
-- ✅ Customer can select lens treatments
-- ✅ Customer can checkout with international shipping (country required)
-- ✅ Customer receives order confirmation email
-- ✅ Admin can create/edit products with brand field
-- ✅ Admin can process orders & validate prescriptions
-- ✅ Admin can update order status & add tracking
-- ✅ Admin can manage inventory (manual + ERP sync every 2 days)
-- ✅ All static/legal pages present (Spanish)
-- ✅ Payment integration working (PagueloFacil - USD)
-- ✅ Email notifications working (order confirmation, shipping)
+**Phase 1 - Product Catalog (✅ COMPLETE as of Nov 6, 2025):**
+- ✅ Customer can browse products (basic layout complete, filters/search TODO)
+- ✅ Customer can add prescription glasses to cart with ENHANCED prescription data (3 types, lens config, pricing)
+- ✅ Customer can select lens treatments (integrated with prescription pricing)
+- ✅ Cart displays prescription summary and dynamic pricing
+
+**Phase 2 - Authentication (⏳ PARTIAL):**
+- ⏳ Customer registration/login (auth routes exist, needs testing)
+- ⏳ Cart transfer from localStorage to database (NOT IMPLEMENTED)
+- ⏳ Profile management (NOT IMPLEMENTED)
+
+**Phase 3 - Checkout & Orders (❌ NOT STARTED):**
+- ⏳ Customer can checkout with international shipping (country required)
+- ⏳ Customer receives order confirmation email
+- ⏳ Payment integration working (PagueloFacil - USD)
+- ⏳ Order processing workflow
+
+**Admin Features (❌ NOT STARTED):**
+- ⏳ Admin can create/edit products with brand field
+- ⏳ Admin can process orders & validate prescriptions
+- ⏳ Admin can update order status & add tracking
+- ⏳ Admin can manage inventory (manual + ERP sync every 2 days)
+
+**Infrastructure & Content (⏳ PARTIAL):**
+- ⏳ All static/legal pages present (Spanish)
+- ⏳ Email notifications working (order confirmation, shipping)
 - ✅ Platform responsive (mobile, tablet, desktop)
-- ✅ Platform fully in Spanish
+- ✅ Platform fully in Spanish (UI components)
 
 ---
 
@@ -326,6 +357,6 @@
 
 ---
 
-**Document Version**: 1.0
-**Last Updated**: November 2, 2025
-**Status**: Approved for Development
+**Document Version**: 1.1
+**Last Updated**: November 6, 2025
+**Status**: Phase 1 Complete - Enhanced Prescription System Implemented
