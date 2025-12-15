@@ -241,17 +241,19 @@ export default function ProductDetailClient({
       {/* Left Column - Images */}
       <div className="space-y-4">
         {/* Main Image */}
-        <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden relative">
+        <div className="relative bg-gray-100 rounded-lg overflow-hidden min-h-[400px] max-h-[600px] flex items-center justify-center">
           {selectedImage ? (
             <Image
               src={selectedImage.cloudfront_url || selectedImage.image_url}
               alt={product.name}
-              fill
-              className="object-contain"
+              width={600}
+              height={600}
+              className="object-contain w-full h-auto max-h-[600px]"
               priority
+              sizes="(max-width: 1024px) 100vw, 50vw"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-400">
+            <div className="flex items-center justify-center text-gray-400">
               <svg className="w-24 h-24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"

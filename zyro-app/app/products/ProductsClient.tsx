@@ -17,7 +17,12 @@ interface Product {
   category: { id: string; name: string; slug: string } | null;
   frame_material: { id: string; name: string } | null;
   frame_shape: { id: string; name: string } | null;
-  product_images: Array<{ id: string; image_url: string; display_order: number }>;
+  product_images: Array<{
+    id: string;
+    image_url: string;
+    cloudfront_url: string | null;
+    display_order: number;
+  }>;
 }
 
 interface FilterOptions {
@@ -183,16 +188,18 @@ export default function ProductsClient({ products, filterOptions }: ProductsClie
                 className="group bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
               >
                 {/* Product Image */}
-                <div className="aspect-square bg-gray-100 relative overflow-hidden">
+                <div className="relative bg-gray-100 overflow-hidden flex items-center justify-center min-h-[200px]">
                   {firstImage ? (
                     <Image
-                      src={firstImage.image_url}
+                      src={firstImage.cloudfront_url || firstImage.image_url}
                       alt={product.name}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-200"
+                      width={400}
+                      height={400}
+                      className="object-contain w-full h-auto group-hover:scale-105 transition-transform duration-200"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                    <div className="flex items-center justify-center text-gray-400 w-full min-h-[200px]">
                       <svg
                         className="w-16 h-16"
                         fill="none"
