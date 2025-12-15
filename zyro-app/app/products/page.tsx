@@ -12,23 +12,60 @@ export default async function ProductsPage() {
   const supabase = await createClient();
 
   // Fetch products with all related data
-  const { data: products, error: productsError } = await supabase
-    .from('products')
-    .select(`
-      *,
-      brand:brands(id, name, slug),
-      category:categories(id, name, slug),
-      frame_material:frame_materials(id, name),
-      frame_shape:frame_shapes(id, name),
-      product_images(id, image_url, display_order)
-    `)
-    .eq('is_active', true)
-    .order('created_at', { ascending: false });
+  // Note: Supabase PostgREST has a hard max-rows limit (default 1000)
+  // We need to fetch in chunks and combine the results
+
+  const CHUNK_SIZE = 1000;
+  const productMap = new Map(); // Use Map to deduplicate by ID
+  let hasMore = true;
+  let offset = 0;
+
+  while (hasMore) {
+    const { data: chunk, error: chunkError } = await supabase
+      .from('products')
+      .select(`
+        *,
+        brand:brands(id, name, slug),
+        category:categories(id, name, slug),
+        frame_material:frame_materials(id, name),
+        frame_shape:frame_shapes(id, name),
+        product_images(id, image_url, cloudfront_url, display_order)
+      `)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false})
+      .range(offset, offset + CHUNK_SIZE - 1);
+
+    if (chunkError) {
+      console.error(`Error fetching products chunk at offset ${offset}:`, chunkError);
+      break;
+    }
+
+    if (!chunk || chunk.length === 0) {
+      hasMore = false;
+      break;
+    }
+
+    // Add products to Map to automatically deduplicate by ID
+    chunk.forEach(product => {
+      productMap.set(product.id, product);
+    });
+
+    // If we got fewer rows than requested, we've reached the end
+    if (chunk.length < CHUNK_SIZE) {
+      hasMore = false;
+    } else {
+      offset += CHUNK_SIZE;
+    }
+  }
+
+  // Convert Map back to array
+  const products = Array.from(productMap.values());
+  const productsError = products.length === 0 ? new Error('No products found') : null;
 
   // Fetch filter options
   const [
     { data: brands },
-    { data: categories },
+    { data: categoriesRaw },
     { data: materials },
     { data: shapes }
   ] = await Promise.all([
@@ -37,6 +74,14 @@ export default async function ProductsPage() {
     supabase.from('frame_materials').select('id, name').order('name'),
     supabase.from('frame_shapes').select('id, name').order('name'),
   ]);
+
+  // Filter categories to only show Aros opticos and Sol
+  const categories = categoriesRaw?.filter((cat) =>
+    cat.slug === 'aros-opticos' ||
+    cat.slug === 'sol' ||
+    cat.slug === 'gafas-con-receta' ||
+    cat.slug === 'gafas-de-sol'
+  ) || [];
 
   if (productsError) {
     console.error('Error fetching products:', productsError);

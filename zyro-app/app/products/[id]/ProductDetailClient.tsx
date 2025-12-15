@@ -33,6 +33,7 @@ interface Product {
   product_images: Array<{
     id: string;
     image_url: string;
+    cloudfront_url: string | null;
     display_order: number;
     is_primary: boolean;
   }>;
@@ -243,10 +244,10 @@ export default function ProductDetailClient({
         <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden relative">
           {selectedImage ? (
             <Image
-              src={selectedImage.image_url}
+              src={selectedImage.cloudfront_url || selectedImage.image_url}
               alt={product.name}
               fill
-              className="object-cover"
+              className="object-contain"
               priority
             />
           ) : (
@@ -291,7 +292,7 @@ export default function ProductDetailClient({
                   alt={`${product.name} - ${index + 1}`}
                   width={100}
                   height={100}
-                  className="object-cover w-full h-full"
+                  className="object-contain w-full h-full"
                 />
               </button>
             ))}
@@ -412,7 +413,7 @@ export default function ProductDetailClient({
         )}
 
         {/* Prescription Form */}
-        {product.category?.slug === 'gafas-con-receta' && (
+        {(product.category?.slug === 'gafas-con-receta' || product.category?.slug === 'aros-opticos') && (
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-900">Configuración de Lentes</h3>
             <PrescriptionForm
@@ -465,7 +466,7 @@ export default function ProductDetailClient({
 
         {/* Add to Cart Button */}
         <div className="space-y-3">
-          {!isPrescriptionFormActive && product.category?.slug === 'gafas-con-receta' && !prescription && (
+          {!isPrescriptionFormActive && (product.category?.slug === 'gafas-con-receta' || product.category?.slug === 'aros-opticos') && !prescription && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
               <p className="text-sm text-yellow-900 font-medium">
                 ⚠️ Por favor elige una opción de lentes arriba
@@ -475,7 +476,7 @@ export default function ProductDetailClient({
               </p>
             </div>
           )}
-          {!isPrescriptionFormActive && (product.category?.slug !== 'gafas-con-receta' || prescription) && (
+          {!isPrescriptionFormActive && ((product.category?.slug !== 'gafas-con-receta' && product.category?.slug !== 'aros-opticos') || prescription) && (
             <button
               onClick={handleAddToCart}
               disabled={isOutOfStock || isAddingToCart}
