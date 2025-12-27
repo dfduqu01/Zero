@@ -63,10 +63,10 @@ export default async function OrderConfirmationPage({
           .select('*')
           .in('order_item_id', orderItemIds)
       : Promise.resolve({ data: [] }),
-    supabase.from('lens_types').select('id, name, slug, description, price_modifier, is_active'),
-    supabase.from('lens_indexes').select('id, name, slug, description, price_modifier, index_value, is_active'),
-    supabase.from('view_areas').select('id, name, slug, description, price_modifier, is_active'),
-    supabase.from('prescription_types').select('id, name, slug, description, is_active'),
+    supabase.from('lens_types').select('*'),
+    supabase.from('lens_indexes').select('*'),
+    supabase.from('view_areas').select('*'),
+    supabase.from('prescription_types').select('*'),
   ]);
 
   const prescriptions = prescriptionsResult.data || [];
@@ -164,23 +164,33 @@ export default async function OrderConfirmationPage({
 
                   return (
                     <div key={item.id} className="bg-gray-50 p-4 rounded-lg">
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex-1">
-                          <p className="font-medium text-gray-900">
-                            {item.product_snapshot.name}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            SKU: {item.product_snapshot.sku}
-                          </p>
-                          <p className="text-sm text-gray-600">Cantidad: {item.quantity}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-semibold text-gray-900">
-                            ${item.subtotal.toFixed(2)}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            ${item.unit_price.toFixed(2)} c/u
-                          </p>
+                      <div className="flex gap-4 mb-3">
+                        {/* Product Image */}
+                        {item.product_snapshot.image_url && (
+                          <img
+                            src={item.product_snapshot.image_url}
+                            alt={item.product_snapshot.name}
+                            className="w-24 h-24 object-cover rounded-md border"
+                          />
+                        )}
+                        <div className="flex-1 flex justify-between items-start">
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-900">
+                              {item.product_snapshot.name}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              SKU: {item.product_snapshot.sku}
+                            </p>
+                            <p className="text-sm text-gray-600">Cantidad: {item.quantity}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-semibold text-gray-900">
+                              ${item.subtotal.toFixed(2)}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              ${item.unit_price.toFixed(2)} c/u
+                            </p>
+                          </div>
                         </div>
                       </div>
 

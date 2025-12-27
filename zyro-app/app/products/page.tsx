@@ -75,12 +75,10 @@ export default async function ProductsPage() {
     supabase.from('frame_shapes').select('id, name').order('name'),
   ]);
 
-  // Filter categories to only show Aros opticos and Sol
+  // Filter categories to only show Aros opticos and Sol (the ones with inventory)
   const categories = categoriesRaw?.filter((cat) =>
     cat.slug === 'aros-opticos' ||
-    cat.slug === 'sol' ||
-    cat.slug === 'gafas-con-receta' ||
-    cat.slug === 'gafas-de-sol'
+    cat.slug === 'sol'
   ) || [];
 
   if (productsError) {

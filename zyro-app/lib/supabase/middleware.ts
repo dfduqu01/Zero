@@ -64,12 +64,17 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith(route + '/')
   );
 
+  // Skip auth check for API routes - they handle their own authentication
+  const isApiRoute = request.nextUrl.pathname.startsWith('/api/');
+
   // Only redirect to login if:
   // - Not a public route
+  // - Not an API route
   // - Not already on auth pages
   // - User is not authenticated
   if (
     !isPublicRoute &&
+    !isApiRoute &&
     !user &&
     !request.nextUrl.pathname.startsWith("/login") &&
     !request.nextUrl.pathname.startsWith("/auth")

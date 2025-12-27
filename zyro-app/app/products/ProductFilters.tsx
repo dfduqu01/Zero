@@ -196,9 +196,7 @@ export default function ProductFilters({
               {categories
                 .filter((category) =>
                   category.slug === 'aros-opticos' ||
-                  category.slug === 'sol' ||
-                  category.slug === 'gafas-con-receta' ||
-                  category.slug === 'gafas-de-sol'
+                  category.slug === 'sol'
                 )
                 .map((category) => (
                   <option key={category.id} value={category.id}>

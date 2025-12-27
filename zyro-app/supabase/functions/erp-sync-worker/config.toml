@@ -1,0 +1,2 @@
+[erp-sync-worker]
+verify_jwt = false

@@ -9,10 +9,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LATIN_AMERICAN_COUNTRIES } from '@/lib/constants/countries';
 import PrescriptionSummary from '@/components/PrescriptionSummary';
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import type { LensType, LensIndex, ViewArea, PrescriptionType } from '@/lib/types/prescription';
 
 interface User {
   id: string;
   name: string;
+  email?: string;
   phone: string;
   country: string;
 }
@@ -44,45 +48,11 @@ interface CartItem {
     price: number;
     description: string | null;
     stock_quantity: number;
+    image_url: string;
   };
   prescription: any;
 }
 
-interface LensType {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  price_modifier: number;
-  is_active: boolean;
-}
-
-interface LensIndex {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  price_modifier: number;
-  index_value: string;
-  is_active: boolean;
-}
-
-interface ViewArea {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  price_modifier: number;
-  is_active: boolean;
-}
-
-interface PrescriptionType {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  is_active: boolean;
-}
 
 interface CheckoutClientProps {
   user: User;
@@ -94,7 +64,7 @@ interface CheckoutClientProps {
   prescriptionTypes: PrescriptionType[];
 }
 
-type CheckoutStep = 'shipping' | 'method' | 'payment' | 'review';
+type CheckoutStep = 'shipping' | 'method' | 'review';
 
 export default function CheckoutClient({
   user,
@@ -116,6 +86,33 @@ export default function CheckoutClient({
   const [shippingMethod, setShippingMethod] = useState<string>('standard');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Check for payment errors in URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlError = urlParams.get('error');
+    if (urlError) {
+      // Map error codes to user-friendly messages
+      const errorMessages: Record<string, string> = {
+        'INVALID_CVN': '❌ Código de seguridad (CVV) inválido. Por favor verifica los datos de tu tarjeta.',
+        'INSUFFICIENT_FUNDS': '❌ Fondos insuficientes. Por favor intenta con otra tarjeta.',
+        'CARD_EXPIRED': '❌ Tarjeta vencida. Por favor usa una tarjeta válida.',
+        'CARD_DECLINED': '❌ Tarjeta rechazada. Por favor contacta a tu banco o intenta con otra tarjeta.',
+        'unexpected_error': '❌ Error inesperado. Por favor intenta nuevamente.',
+        'session_not_found': '❌ Sesión expirada. Por favor intenta nuevamente.',
+      };
+
+      const friendlyMessage = errorMessages[urlError] || `❌ Error en el pago: ${decodeURIComponent(urlError)}`;
+      setError(friendlyMessage);
+
+      // Scroll to top to show error
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // Clear error from URL
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, []);
 
   // Address form state
   const [addressForm, setAddressForm] = useState({
@@ -165,7 +162,10 @@ export default function CheckoutClient({
     }, 0);
 
     // Shipping costs based on method
-    const shippingCost = shippingMethod === 'express' ? 25.0 : 15.0;
+    const shippingCost =
+      shippingMethod === 'express' ? 25.0 :
+      shippingMethod === 'no_delivery' ? 0.0 :
+      15.0; // standard
 
     const total = subtotal + prescriptionCosts + shippingCost;
 
@@ -183,8 +183,7 @@ export default function CheckoutClient({
   const steps: { id: CheckoutStep; label: string; number: number }[] = [
     { id: 'shipping', label: 'Dirección de Envío', number: 1 },
     { id: 'method', label: 'Método de Envío', number: 2 },
-    { id: 'payment', label: 'Pago', number: 3 },
-    { id: 'review', label: 'Revisar Pedido', number: 4 },
+    { id: 'review', label: 'Revisar Pedido', number: 3 },
   ];
 
   const currentStepIndex = steps.findIndex((s) => s.id === currentStep);
@@ -197,8 +196,6 @@ export default function CheckoutClient({
       }
       setCurrentStep('method');
     } else if (currentStep === 'method') {
-      setCurrentStep('payment');
-    } else if (currentStep === 'payment') {
       setCurrentStep('review');
     }
   };
@@ -206,10 +203,8 @@ export default function CheckoutClient({
   const handlePrevStep = () => {
     if (currentStep === 'method') {
       setCurrentStep('shipping');
-    } else if (currentStep === 'payment') {
-      setCurrentStep('method');
     } else if (currentStep === 'review') {
-      setCurrentStep('payment');
+      setCurrentStep('method');
     }
   };
 
@@ -258,88 +253,81 @@ export default function CheckoutClient({
     }
   };
 
-  // Place order
+  // Place order (redirect-based payment flow)
   const handlePlaceOrder = async () => {
     setError(null);
     setIsProcessing(true);
 
     try {
-      // Generate order number
-      const orderNumber = `ZERO-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 100000)).padStart(5, '0')}`;
-
-      // Get selected address
+      // 1. Get selected address
       const selectedAddress = addresses.find((a) => a.id === selectedAddressId);
       if (!selectedAddress) {
         throw new Error('No se seleccionó dirección de envío');
       }
 
-      // Create order
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          order_number: orderNumber,
-          user_id: user.id,
-          status: 'pending',
-          shipping_address_id: selectedAddressId,
-          shipping_address_snapshot: selectedAddress,
-          shipping_method: shippingMethod === 'express' ? 'Envío Express' : 'Envío Estándar',
-          shipping_cost: totals.shippingCost,
-          subtotal: totals.subtotal,
-          treatments_cost: totals.prescriptionCosts,
-          total: totals.total,
-          payment_method: 'PagueloFacil',
-          payment_status: 'pending',
-        })
-        .select()
-        .single();
+      // 2. Generate order number
+      const orderNumber = `ZERO-${new Date().getFullYear()}-${String(
+        Math.floor(Math.random() * 100000)
+      ).padStart(5, '0')}`;
 
-      if (orderError) throw orderError;
+      console.log('[Checkout] Saving checkout session for order:', orderNumber);
 
-      // Create order items
-      for (const item of cartItems) {
-        const { data: orderItem, error: itemError } = await supabase
-          .from('order_items')
-          .insert({
-            order_id: order.id,
+      // 3. Save checkout session (before redirect)
+      const sessionResponse = await fetch('/api/checkout/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderNumber,
+          addressId: selectedAddressId,
+          shippingMethod,
+          cartItems: cartItems.map((item) => ({
             product_id: item.product_id,
-            product_snapshot: item.products,
             quantity: item.quantity,
             unit_price: item.products.price,
-            subtotal: item.products.price * item.quantity,
-          })
-          .select()
-          .single();
+            product_snapshot: {
+              sku: item.products.sku,
+              name: item.products.name,
+              price: item.products.price,
+              description: item.products.description,
+              image_url: item.products.image_url,
+            },
+            prescription: item.prescription,
+          })),
+          amount: totals.total,
+        }),
+      });
 
-        if (itemError) throw itemError;
-
-        // Copy prescription data if exists
-        if (item.prescription) {
-          const { error: prescriptionError } = await supabase
-            .from('order_item_prescriptions')
-            .insert({
-              order_item_id: orderItem.id,
-              ...item.prescription,
-              cart_item_id: undefined, // Remove cart reference
-            });
-
-          if (prescriptionError) throw prescriptionError;
-        }
+      if (!sessionResponse.ok) {
+        const result = await sessionResponse.json();
+        throw new Error(result.error || 'Error al guardar la sesión');
       }
 
-      // Clear cart
-      const { error: clearCartError } = await supabase
-        .from('cart_items')
-        .delete()
-        .eq('user_id', user.id);
+      console.log('[Checkout] Session saved, creating payment link...');
 
-      if (clearCartError) throw clearCartError;
+      // 4. Create payment link
+      const paymentResponse = await fetch('/api/checkout/create-payment-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: totals.total,
+          orderNumber,
+          description: `ZERO Optical - Order #${orderNumber}`,
+        }),
+      });
 
-      // Redirect to confirmation
-      router.push(`/orders/${order.id}/confirmation`);
+      const paymentResult = await paymentResponse.json();
+
+      if (!paymentResult.success || !paymentResult.paymentUrl) {
+        throw new Error(paymentResult.error || 'No se pudo crear el enlace de pago');
+      }
+
+      console.log('[Checkout] Payment link created, redirecting to PagueloFacil...');
+
+      // 5. Redirect to PagueloFacil hosted checkout
+      window.location.href = paymentResult.paymentUrl;
     } catch (err: any) {
-      console.error('Error placing order:', err);
+      console.error('[Checkout] Error creating payment:', err);
       setError(err.message || 'Error al procesar el pedido');
-    } finally {
       setIsProcessing(false);
     }
   };
@@ -386,9 +374,16 @@ export default function CheckoutClient({
           {/* Main Content */}
           <div className="lg:col-span-2">
             {error && (
-              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
-                {error}
-              </div>
+              <Alert variant="destructive" className="mb-6">
+                <AlertCircle className="h-5 w-5" />
+                <AlertTitle className="text-lg font-semibold">Error en el Pago</AlertTitle>
+                <AlertDescription className="mt-2 text-base">
+                  {error}
+                  <p className="mt-3 text-sm">
+                    Tu carrito se ha mantenido. Puedes intentar nuevamente con otra tarjeta o método de pago.
+                  </p>
+                </AlertDescription>
+              </Alert>
             )}
 
             {/* Step 1: Shipping Address */}
@@ -614,34 +609,29 @@ export default function CheckoutClient({
                         <span className="font-semibold">$25.00</span>
                       </div>
                     </div>
+
+                    <div
+                      className={`p-4 border rounded-lg cursor-pointer transition ${
+                        shippingMethod === 'no_delivery'
+                          ? 'border-blue-600 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      onClick={() => setShippingMethod('no_delivery')}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-semibold">Sin Envío (Testing)</p>
+                          <p className="text-sm text-gray-600">Solo para productos de prueba</p>
+                        </div>
+                        <span className="font-semibold text-green-600">GRATIS</span>
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             )}
 
-            {/* Step 3: Payment */}
-            {currentStep === 'payment' && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Método de Pago</CardTitle>
-                  <CardDescription>
-                    Procesa tu pago de forma segura con PagueloFacil
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="p-6 bg-gray-50 border border-gray-200 rounded-lg text-center">
-                    <p className="text-gray-600 mb-4">
-                      Integración de PagueloFacil próximamente
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Por ahora, puedes continuar para crear el pedido en estado pendiente
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Step 4: Review */}
+            {/* Step 3: Review */}
             {currentStep === 'review' && (
               <Card>
                 <CardHeader>
@@ -723,20 +713,33 @@ export default function CheckoutClient({
 
                           return (
                             <div key={item.id} className="border-b pb-4">
-                              <div className="flex justify-between mb-2">
-                                <div>
-                                  <p className="font-medium">{item.products.name}</p>
-                                  <p className="text-sm text-gray-600">Cantidad: {item.quantity}</p>
-                                  <p className="text-sm text-gray-600">
-                                    Precio base: ${item.products.price.toFixed(2)}
-                                  </p>
-                                  {itemPrescriptionCost > 0 && (
-                                    <p className="text-sm text-gray-600">
-                                      Lentes y tratamientos: ${itemPrescriptionCost.toFixed(2)}
-                                    </p>
-                                  )}
+                              <div className="flex gap-4 mb-2">
+                                {/* Product Image */}
+                                {item.products.image_url && (
+                                  <img
+                                    src={item.products.image_url}
+                                    alt={item.products.name}
+                                    className="w-20 h-20 object-cover rounded-md border"
+                                  />
+                                )}
+                                <div className="flex-1">
+                                  <div className="flex justify-between">
+                                    <div className="flex-1">
+                                      <p className="font-medium">{item.products.name}</p>
+                                      <p className="text-sm text-gray-600">SKU: {item.products.sku}</p>
+                                      <p className="text-sm text-gray-600">Cantidad: {item.quantity}</p>
+                                      <p className="text-sm text-gray-600">
+                                        Precio base: ${item.products.price.toFixed(2)}
+                                      </p>
+                                      {itemPrescriptionCost > 0 && (
+                                        <p className="text-sm text-gray-600">
+                                          Lentes y tratamientos: ${itemPrescriptionCost.toFixed(2)}
+                                        </p>
+                                      )}
+                                    </div>
+                                    <span className="font-medium">${itemTotal.toFixed(2)}</span>
+                                  </div>
                                 </div>
-                                <span className="font-medium">${itemTotal.toFixed(2)}</span>
                               </div>
 
                               {/* Show prescription details if present */}
@@ -790,12 +793,15 @@ export default function CheckoutClient({
               </Button>
 
               {currentStep !== 'review' ? (
-                <Button onClick={handleNextStep} disabled={isProcessing}>
+                <Button
+                  onClick={handleNextStep}
+                  disabled={isProcessing}
+                >
                   Siguiente →
                 </Button>
               ) : (
                 <Button onClick={handlePlaceOrder} disabled={isProcessing}>
-                  {isProcessing ? 'Procesando...' : 'Confirmar Pedido'}
+                  {isProcessing ? 'Redirigiendo a pago...' : `Continuar al Pago ($${totals.total.toFixed(2)} USD)`}
                 </Button>
               )}
             </div>
@@ -832,11 +838,20 @@ export default function CheckoutClient({
                     </p>
                     <div className="space-y-2">
                       {cartItems.map((item) => (
-                        <div key={item.id} className="text-sm flex justify-between">
-                          <span className="text-gray-600">
-                            {item.products.name} × {item.quantity}
-                          </span>
-                          <span>${(item.products.price * item.quantity).toFixed(2)}</span>
+                        <div key={item.id} className="text-sm flex gap-2">
+                          {item.products.image_url && (
+                            <img
+                              src={item.products.image_url}
+                              alt={item.products.name}
+                              className="w-12 h-12 object-cover rounded border"
+                            />
+                          )}
+                          <div className="flex-1 flex justify-between">
+                            <span className="text-gray-600">
+                              {item.products.name} × {item.quantity}
+                            </span>
+                            <span className="font-medium">${(item.products.price * item.quantity).toFixed(2)}</span>
+                          </div>
                         </div>
                       ))}
                     </div>

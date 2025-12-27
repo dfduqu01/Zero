@@ -39,7 +39,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
       category:categories(id, name, slug),
       frame_material:frame_materials(id, name),
       frame_shape:frame_shapes(id, name),
-      product_images(id, image_url, display_order, is_primary)
+      product_images(id, image_url, cloudfront_url, display_order, is_primary)
     `)
     .eq('id', id)
     .eq('is_active', true)

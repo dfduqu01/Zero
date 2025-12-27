@@ -38,10 +38,10 @@ export default async function AdminOrderDetailPage({
     orderItemIds.length > 0
       ? supabase.from('order_item_prescriptions').select('*').in('order_item_id', orderItemIds)
       : Promise.resolve({ data: [] }),
-    supabase.from('lens_types').select('id, name, slug, description, price_modifier, is_active'),
-    supabase.from('lens_indexes').select('id, name, slug, description, price_modifier, index_value, is_active'),
-    supabase.from('view_areas').select('id, name, slug, description, price_modifier, is_active'),
-    supabase.from('prescription_types').select('id, name, slug, description, is_active'),
+    supabase.from('lens_types').select('*'),
+    supabase.from('lens_indexes').select('*'),
+    supabase.from('view_areas').select('*'),
+    supabase.from('prescription_types').select('*'),
   ]);
 
   const prescriptions = prescriptionsResult.data || [];

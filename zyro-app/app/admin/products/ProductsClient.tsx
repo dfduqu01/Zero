@@ -24,6 +24,8 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive' | 'low-stock' | 'out-of-stock'>('all');
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 50; // Show 50 products per page for admin
 
   // Filter products
   const filteredProducts = products.filter((product) => {
@@ -57,6 +59,24 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
     inactive: products.filter(p => !p.is_active).length,
     lowStock: products.filter(p => isLowStock(p.stock_quantity, p.low_stock_threshold) && p.is_active).length,
     outOfStock: products.filter(p => isOutOfStock(p.stock_quantity)).length,
+  };
+
+  // Pagination
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Reset to page 1 when filters change
+  const handleFilterChange = (status: typeof filterStatus) => {
+    setFilterStatus(status);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1);
   };
 
   // Handle delete product
@@ -164,48 +184,63 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
             type="text"
             placeholder="Buscar por nombre, SKU o marca..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
         <div className="flex gap-2 flex-wrap">
           <Button
             variant={filterStatus === 'all' ? 'default' : 'outline'}
-            onClick={() => setFilterStatus('all')}
+            onClick={() => handleFilterChange('all')}
             size="sm"
           >
             Todos ({counts.all})
           </Button>
           <Button
             variant={filterStatus === 'active' ? 'default' : 'outline'}
-            onClick={() => setFilterStatus('active')}
+            onClick={() => handleFilterChange('active')}
             size="sm"
           >
             Activos ({counts.active})
           </Button>
           <Button
             variant={filterStatus === 'inactive' ? 'default' : 'outline'}
-            onClick={() => setFilterStatus('inactive')}
+            onClick={() => handleFilterChange('inactive')}
             size="sm"
           >
             Inactivos ({counts.inactive})
           </Button>
           <Button
             variant={filterStatus === 'low-stock' ? 'default' : 'outline'}
-            onClick={() => setFilterStatus('low-stock')}
+            onClick={() => handleFilterChange('low-stock')}
             size="sm"
           >
             Stock Bajo ({counts.lowStock})
           </Button>
           <Button
             variant={filterStatus === 'out-of-stock' ? 'default' : 'outline'}
-            onClick={() => setFilterStatus('out-of-stock')}
+            onClick={() => handleFilterChange('out-of-stock')}
             size="sm"
           >
             Sin Stock ({counts.outOfStock})
           </Button>
         </div>
       </div>
+
+      {/* Results Count */}
+      {filteredProducts.length > 0 && (
+        <div className="flex items-center justify-between text-sm text-gray-600">
+          <p>
+            Mostrando {(currentPage - 1) * itemsPerPage + 1}-
+            {Math.min(currentPage * itemsPerPage, filteredProducts.length)} de {filteredProducts.length} productos
+          </p>
+          {totalPages > 1 && (
+            <p>
+              Página {currentPage} de {totalPages}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Products Table */}
       {filteredProducts.length === 0 ? (
@@ -258,7 +293,7 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredProducts.map((product) => {
+                  {paginatedProducts.map((product) => {
                     const primaryImage = product.product_images?.[0]?.image_url;
                     const lowStock = isLowStock(product.stock_quantity, product.low_stock_threshold);
                     const outOfStock = isOutOfStock(product.stock_quantity);
@@ -340,6 +375,68 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2">
+          {/* Previous Button */}
+          <Button
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            variant="outline"
+            size="sm"
+          >
+            ← Anterior
+          </Button>
+
+          {/* Page Numbers */}
+          <div className="flex gap-1">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+              // Show first page, last page, current page, and pages around current
+              const showPage =
+                page === 1 ||
+                page === totalPages ||
+                (page >= currentPage - 2 && page <= currentPage + 2);
+
+              // Show ellipsis
+              const showEllipsisBefore = page === currentPage - 3 && currentPage > 4;
+              const showEllipsisAfter = page === currentPage + 3 && currentPage < totalPages - 3;
+
+              if (showEllipsisBefore || showEllipsisAfter) {
+                return (
+                  <span key={page} className="px-2 py-1 text-gray-500">
+                    ...
+                  </span>
+                );
+              }
+
+              if (!showPage) return null;
+
+              return (
+                <Button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  variant={currentPage === page ? 'default' : 'outline'}
+                  size="sm"
+                  className="min-w-[2.5rem]"
+                >
+                  {page}
+                </Button>
+              );
+            })}
+          </div>
+
+          {/* Next Button */}
+          <Button
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            variant="outline"
+            size="sm"
+          >
+            Siguiente →
+          </Button>
+        </div>
       )}
     </div>
   );

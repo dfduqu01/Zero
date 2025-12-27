@@ -67,6 +67,28 @@ export default function OrderStatusForm({
 
       if (historyError) throw historyError;
 
+      // Send shipping notification email if status changed to 'shipped' and tracking info provided
+      if (status === 'shipped' && trackingNumber && trackingCarrier) {
+        try {
+          const emailResponse = await fetch(`/api/orders/${orderId}/send-shipped-email`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (!emailResponse.ok) {
+            console.error('Failed to send shipping notification email');
+            // Don't throw error - order was still updated successfully
+          } else {
+            console.log('Shipping notification email sent successfully');
+          }
+        } catch (emailError) {
+          console.error('Error sending shipping email:', emailError);
+          // Don't throw error - order was still updated successfully
+        }
+      }
+
       setMessage({ type: 'success', text: 'Estado del pedido actualizado exitosamente' });
 
       // Reset notes field

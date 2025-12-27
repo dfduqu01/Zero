@@ -78,6 +78,8 @@ export default function InventoryClient({
   const [adjustmentReason, setAdjustmentReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [movements, setMovements] = useState<InventoryMovement[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 50; // Show 50 products per page
 
   // Get stock status for a product
   const getStockStatus = (product: Product) => {
@@ -105,6 +107,24 @@ export default function InventoryClient({
 
     return true;
   });
+
+  // Pagination
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Reset to page 1 when filters change
+  const handleFilterChange = (newFilter: StockFilter) => {
+    setFilter(newFilter);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1);
+  };
 
   // Open adjustment modal
   const openAdjustmentModal = (product: Product) => {
@@ -331,7 +351,7 @@ export default function InventoryClient({
             type="text"
             placeholder="Buscar por nombre o SKU..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="pl-10"
           />
         </div>
@@ -340,14 +360,14 @@ export default function InventoryClient({
         <div className="flex gap-2 flex-wrap">
           <Button
             variant={filter === 'all' ? 'default' : 'outline'}
-            onClick={() => setFilter('all')}
+            onClick={() => handleFilterChange('all')}
             size="sm"
           >
             Todos
           </Button>
           <Button
             variant={filter === 'in_stock' ? 'default' : 'outline'}
-            onClick={() => setFilter('in_stock')}
+            onClick={() => handleFilterChange('in_stock')}
             size="sm"
             className="flex items-center gap-1"
           >
@@ -356,7 +376,7 @@ export default function InventoryClient({
           </Button>
           <Button
             variant={filter === 'low_stock' ? 'default' : 'outline'}
-            onClick={() => setFilter('low_stock')}
+            onClick={() => handleFilterChange('low_stock')}
             size="sm"
             className="flex items-center gap-1"
           >
@@ -365,7 +385,7 @@ export default function InventoryClient({
           </Button>
           <Button
             variant={filter === 'out_of_stock' ? 'default' : 'outline'}
-            onClick={() => setFilter('out_of_stock')}
+            onClick={() => handleFilterChange('out_of_stock')}
             size="sm"
             className="flex items-center gap-1"
           >
@@ -374,6 +394,21 @@ export default function InventoryClient({
           </Button>
         </div>
       </div>
+
+      {/* Results Count */}
+      {filteredProducts.length > 0 && (
+        <div className="flex items-center justify-between text-sm text-gray-600">
+          <p>
+            Mostrando {(currentPage - 1) * itemsPerPage + 1}-
+            {Math.min(currentPage * itemsPerPage, filteredProducts.length)} de {filteredProducts.length} productos
+          </p>
+          {totalPages > 1 && (
+            <p>
+              Página {currentPage} de {totalPages}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Products Table */}
       <Card>
@@ -413,7 +448,7 @@ export default function InventoryClient({
                     </td>
                   </tr>
                 ) : (
-                  filteredProducts.map((product) => {
+                  paginatedProducts.map((product) => {
                     const status = getStockStatus(product);
                     return (
                       <tr key={product.id} className="hover:bg-gray-50">
@@ -493,6 +528,68 @@ export default function InventoryClient({
           </div>
         </CardContent>
       </Card>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2">
+          {/* Previous Button */}
+          <Button
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            variant="outline"
+            size="sm"
+          >
+            ← Anterior
+          </Button>
+
+          {/* Page Numbers */}
+          <div className="flex gap-1">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+              // Show first page, last page, current page, and pages around current
+              const showPage =
+                page === 1 ||
+                page === totalPages ||
+                (page >= currentPage - 2 && page <= currentPage + 2);
+
+              // Show ellipsis
+              const showEllipsisBefore = page === currentPage - 3 && currentPage > 4;
+              const showEllipsisAfter = page === currentPage + 3 && currentPage < totalPages - 3;
+
+              if (showEllipsisBefore || showEllipsisAfter) {
+                return (
+                  <span key={page} className="px-2 py-1 text-gray-500">
+                    ...
+                  </span>
+                );
+              }
+
+              if (!showPage) return null;
+
+              return (
+                <Button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  variant={currentPage === page ? 'default' : 'outline'}
+                  size="sm"
+                  className="min-w-[2.5rem]"
+                >
+                  {page}
+                </Button>
+              );
+            })}
+          </div>
+
+          {/* Next Button */}
+          <Button
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            variant="outline"
+            size="sm"
+          >
+            Siguiente →
+          </Button>
+        </div>
+      )}
 
       {/* Stock Adjustment Modal */}
       {showAdjustmentModal && selectedProduct && (

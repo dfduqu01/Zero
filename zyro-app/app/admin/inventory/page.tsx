@@ -27,25 +27,60 @@ export default async function AdminInventoryPage() {
   }
 
   // Fetch all products with brand information
-  const { data: rawProducts, error: productsError } = await supabase
-    .from('products')
-    .select(
+  // Note: Supabase PostgREST has a hard max-rows limit (default 1000)
+  // We need to fetch in chunks and combine the results
+
+  const CHUNK_SIZE = 1000;
+  const productMap = new Map(); // Use Map to deduplicate by ID
+  let hasMore = true;
+  let offset = 0;
+  let productsError = null;
+
+  while (hasMore) {
+    const { data: chunk, error: chunkError } = await supabase
+      .from('products')
+      .select(
+        `
+        id,
+        sku,
+        name,
+        stock_quantity,
+        low_stock_threshold,
+        is_active,
+        price,
+        brand:brands!products_brand_id_fkey(id, name),
+        category:categories!products_category_id_fkey(id, name)
       `
-      id,
-      sku,
-      name,
-      stock_quantity,
-      low_stock_threshold,
-      is_active,
-      price,
-      brand:brands!products_brand_id_fkey(id, name),
-      category:categories!products_category_id_fkey(id, name)
-    `
-    )
-    .order('name', { ascending: true });
+      )
+      .order('name', { ascending: true })
+      .range(offset, offset + CHUNK_SIZE - 1);
+
+    if (chunkError) {
+      console.error(`Error fetching products chunk at offset ${offset}:`, chunkError);
+      productsError = chunkError;
+      break;
+    }
+
+    if (!chunk || chunk.length === 0) {
+      hasMore = false;
+      break;
+    }
+
+    // Add products to Map to automatically deduplicate by ID
+    chunk.forEach(product => {
+      productMap.set(product.id, product);
+    });
+
+    // If we got fewer rows than requested, we've reached the end
+    if (chunk.length < CHUNK_SIZE) {
+      hasMore = false;
+    } else {
+      offset += CHUNK_SIZE;
+    }
+  }
 
   // Transform the data to match expected types (single objects instead of arrays)
-  const products = rawProducts?.map((p: any) => ({
+  const products = Array.from(productMap.values()).map((p: any) => ({
     id: p.id,
     sku: p.sku,
     name: p.name,

@@ -50,10 +50,10 @@ export default async function CheckoutPage() {
         )
       `)
       .eq('user_id', user.id),
-    supabase.from('lens_types').select('id, name, slug, description, price_modifier, is_active'),
-    supabase.from('lens_indexes').select('id, name, slug, description, price_modifier, index_value, is_active'),
-    supabase.from('view_areas').select('id, name, slug, description, price_modifier, is_active'),
-    supabase.from('prescription_types').select('id, name, slug, description, is_active'),
+    supabase.from('lens_types').select('*'),
+    supabase.from('lens_indexes').select('*'),
+    supabase.from('view_areas').select('*'),
+    supabase.from('prescription_types').select('*'),
   ]);
 
   const cartItems = cartResult.data;
@@ -62,18 +62,39 @@ export default async function CheckoutPage() {
   const viewAreas = viewAreasResult.data || [];
   const prescriptionTypes = prescriptionTypesResult.data || [];
 
-  // Fetch prescription data for each cart item
+  // Fetch prescription data and product images for each cart item
   const cartItemsWithPrescriptions = await Promise.all(
     (cartItems || []).map(async (item) => {
-      const { data: prescription } = await supabase
-        .from('cart_item_prescriptions')
-        .select('*')
-        .eq('cart_item_id', item.id)
-        .single();
+      const [prescriptionResult, imageResult] = await Promise.all([
+        supabase
+          .from('cart_item_prescriptions')
+          .select('*')
+          .eq('cart_item_id', item.id)
+          .single(),
+        supabase
+          .from('product_images')
+          .select('image_url, cloudfront_url')
+          .eq('product_id', item.product_id)
+          .or('is_primary.eq.true,display_order.eq.1')
+          .order('is_primary', { ascending: false })
+          .order('display_order', { ascending: true })
+          .limit(1)
+          .single()
+      ]);
+
+      // Transform products from array to single object if needed
+      const products = Array.isArray(item.products) ? item.products[0] : item.products;
+
+      // Add image_url to products object
+      const productWithImage = {
+        ...products,
+        image_url: imageResult.data?.cloudfront_url || imageResult.data?.image_url || null
+      };
 
       return {
         ...item,
-        prescription,
+        products: productWithImage,
+        prescription: prescriptionResult.data,
       };
     })
   );
@@ -87,7 +108,10 @@ export default async function CheckoutPage() {
     <div className="min-h-screen bg-gray-50">
       <SiteHeader />
       <CheckoutClient
-        user={userData}
+        user={{
+          ...userData,
+          email: user.email, // Include email from auth user
+        }}
         addresses={addresses || []}
         cartItems={cartItemsWithPrescriptions}
         lensTypes={lensTypes}

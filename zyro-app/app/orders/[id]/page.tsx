@@ -78,10 +78,10 @@ export default async function OrderDetailPage({
           .select('*')
           .in('order_item_id', orderItemIds)
       : Promise.resolve({ data: [] }),
-    supabase.from('lens_types').select('id, name, slug, description, price_modifier, is_active'),
-    supabase.from('lens_indexes').select('id, name, slug, description, price_modifier, index_value, is_active'),
-    supabase.from('view_areas').select('id, name, slug, description, price_modifier, is_active'),
-    supabase.from('prescription_types').select('id, name, slug, description, is_active'),
+    supabase.from('lens_types').select('*'),
+    supabase.from('lens_indexes').select('*'),
+    supabase.from('view_areas').select('*'),
+    supabase.from('prescription_types').select('*'),
   ]);
 
   const prescriptions = prescriptionsResult.data || [];
@@ -273,8 +273,16 @@ export default async function OrderDetailPage({
                   {orderItems?.map((item) => (
                     <div
                       key={item.id}
-                      className="flex flex-col sm:flex-row gap-4 pb-4 border-b last:border-b-0"
+                      className="flex gap-4 pb-4 border-b last:border-b-0"
                     >
+                      {/* Product Image */}
+                      {item.product_snapshot.image_url && (
+                        <img
+                          src={item.product_snapshot.image_url}
+                          alt={item.product_snapshot.name}
+                          className="w-24 h-24 object-cover rounded-md border flex-shrink-0"
+                        />
+                      )}
                       <div className="flex-1">
                         <h3 className="font-medium text-gray-900">
                           {item.product_snapshot.name}

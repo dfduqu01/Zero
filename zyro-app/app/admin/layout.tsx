@@ -10,6 +10,9 @@ import {
   Users,
   LogOut,
   Warehouse,
+  RefreshCw,
+  DollarSign,
+  Calculator,
 } from 'lucide-react';
 
 export default async function AdminLayout({
@@ -73,6 +76,18 @@ export default async function AdminLayout({
 
           <NavLink href="/admin/inventory" icon={<Warehouse size={20} />}>
             Inventory
+          </NavLink>
+
+          <NavLink href="/admin/erp-sync" icon={<RefreshCw size={20} />}>
+            ERP Sync
+          </NavLink>
+
+          <NavLink href="/admin/pricing-tiers" icon={<DollarSign size={20} />}>
+            Pricing Tiers
+          </NavLink>
+
+          <NavLink href="/admin/pricing-recalculation" icon={<Calculator size={20} />}>
+            Pricing Recalculation
           </NavLink>
 
           <NavLink href="/admin/prescription-config" icon={<Settings size={20} />}>

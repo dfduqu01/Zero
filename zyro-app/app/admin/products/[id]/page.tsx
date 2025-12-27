@@ -52,7 +52,7 @@ export default async function EditProductPage({
   // Sort product images by display_order
   const productWithSortedImages: ProductWithRelations = {
     ...product,
-    product_images: product.product_images?.sort((a, b) => a.display_order - b.display_order) || [],
+    product_images: product.product_images?.sort((a: { display_order: number }, b: { display_order: number }) => a.display_order - b.display_order) || [],
   };
 
   // Fetch lookup data for form
