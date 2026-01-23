@@ -97,7 +97,7 @@ export default async function Home() {
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-8">
             <div className="space-y-4">
-              <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-tight">
+              <h1 className="text-5xl md:text-6xl xl:text-7xl font-extrabold tracking-tight leading-tight">
                 CERO<br />
                 INTERMEDIARIOS<br />
                 CERO LÍMITES
