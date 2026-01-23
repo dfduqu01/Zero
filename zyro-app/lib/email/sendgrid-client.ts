@@ -75,5 +75,20 @@ export class SendGridEmailClient {
   }
 }
 
-// Export singleton instance
-export const sendGridClient = new SendGridEmailClient();
+// Lazy-loaded singleton instance (avoids build-time errors when env vars aren't set)
+let _sendGridClient: SendGridEmailClient | null = null;
+
+export const sendGridClient = {
+  sendEmail: async (params: SendEmailParams): Promise<boolean> => {
+    if (!_sendGridClient) {
+      _sendGridClient = new SendGridEmailClient();
+    }
+    return _sendGridClient.sendEmail(params);
+  },
+  sendTestEmail: async (to: string, templateId: string, dynamicData: Record<string, any>): Promise<boolean> => {
+    if (!_sendGridClient) {
+      _sendGridClient = new SendGridEmailClient();
+    }
+    return _sendGridClient.sendTestEmail(to, templateId, dynamicData);
+  },
+};
