@@ -129,7 +129,7 @@ export default async function Home() {
               </div>
             </div>
           </div>
-          <div className="relative h-[500px] lg:h-[600px] rounded-lg overflow-hidden bg-muted">
+          <div className="relative h-[350px] md:h-[450px] lg:h-[600px] rounded-lg overflow-hidden bg-muted">
             <HeroCarousel />
           </div>
         </div>
