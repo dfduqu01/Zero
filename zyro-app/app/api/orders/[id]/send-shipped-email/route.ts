@@ -12,10 +12,13 @@ import { sendOrderShippedEmail } from '@/lib/email/email-service';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
+    const { id } = await params; // Await params in Next.js 15+
+
+    console.log('[send-shipped-email] Received request for order:', id);
 
     // Verify admin authentication
     const {
@@ -42,15 +45,17 @@ export async function POST(
       .from('orders')
       .select(`
         *,
-        user:users(name, id),
-        shipping_address:addresses(*)
+        user:users(name, id)
       `)
-      .eq('id', params.id)
+      .eq('id', id)
       .single();
 
     if (orderError || !order) {
+      console.error('[send-shipped-email] Order not found:', { id, error: orderError });
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
+
+    console.log('[send-shipped-email] Order found:', order.order_number);
 
     // Validate order has shipping info
     if (!order.tracking_number || !order.tracking_carrier) {
@@ -64,24 +69,28 @@ export async function POST(
     const { data: orderItems, error: itemsError } = await supabase
       .from('order_items')
       .select('quantity, product_snapshot')
-      .eq('order_id', params.id);
+      .eq('order_id', id);
 
     if (itemsError) {
       return NextResponse.json({ error: 'Failed to fetch order items' }, { status: 500 });
     }
 
-    // Get customer email from auth
-    const { data: customer } = await supabase.auth.admin.getUserById(order.user.id);
+    // Get customer email using database function
+    const { data: customerEmail, error: emailError } = await supabase
+      .rpc('get_user_email', { user_id: order.user_id });
 
-    if (!customer.user?.email) {
+    if (emailError || !customerEmail) {
+      console.error('[send-shipped-email] Customer email not found for user:', order.user_id, emailError);
       return NextResponse.json({ error: 'Customer email not found' }, { status: 404 });
     }
+
+    console.log('[send-shipped-email] Customer email found:', customerEmail);
 
     // Prepare email data
     const emailData = {
       orderNumber: order.order_number,
       customerName: order.user.name,
-      customerEmail: customer.user.email,
+      customerEmail: customerEmail,
       carrier: order.tracking_carrier,
       trackingNumber: order.tracking_number,
       trackingUrl: undefined, // Could add tracking URL generation logic here
@@ -93,10 +102,10 @@ export async function POST(
         quantity: item.quantity,
       })) || [],
       shippingAddress: {
-        fullName: order.shipping_address.full_name,
-        addressLine1: order.shipping_address.address_line_1,
-        city: order.shipping_address.city,
-        country: order.shipping_address.country,
+        fullName: order.shipping_address_snapshot?.full_name || 'N/A',
+        addressLine1: order.shipping_address_snapshot?.address_line_1 || 'N/A',
+        city: order.shipping_address_snapshot?.city || 'N/A',
+        country: order.shipping_address_snapshot?.country || 'N/A',
       },
     };
 

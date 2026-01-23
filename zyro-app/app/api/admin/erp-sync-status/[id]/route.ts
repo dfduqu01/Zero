@@ -14,28 +14,31 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const { id } = await context.params;
     const adminClient = createAdminClient();
 
-    const { data: job, error } = await adminClient
+    // Fetch job
+    const { data: job, error: jobError } = await adminClient
       .from('erp_sync_jobs')
-      .select(`
-        *,
-        erp_sync_logs!sync_log_id (
-          id,
-          status,
-          records_processed,
-          records_updated,
-          error_count,
-          started_at,
-          completed_at
-        )
-      `)
+      .select('*')
       .eq('id', id)
       .single();
 
-    if (error || !job) {
+    if (jobError || !job) {
+      console.error('[Job Status API] Job not found:', jobError);
       return NextResponse.json(
-        { error: 'Job not found' },
+        { error: 'Job not found', details: jobError?.message },
         { status: 404 }
       );
+    }
+
+    // Fetch sync log separately
+    let syncLog = null;
+    if (job.sync_log_id) {
+      const { data: logData } = await adminClient
+        .from('erp_sync_logs')
+        .select('id, status, records_processed, records_updated, error_count, started_at, completed_at')
+        .eq('id', job.sync_log_id)
+        .single();
+
+      syncLog = logData;
     }
 
     // Get error count from erp_sync_errors table
@@ -47,6 +50,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     return NextResponse.json({
       job: {
         ...job,
+        erp_sync_logs: syncLog,
         error_count: errorCount || 0,
       },
     });

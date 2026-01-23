@@ -2,8 +2,8 @@ import { RegisterForm } from "@/components/register-form";
 import Link from "next/link";
 
 export const metadata = {
-  title: "Registrarse | ZERO",
-  description: "Crea tu cuenta en ZERO",
+  title: "Registrarse | Zyro Online",
+  description: "Crea tu cuenta en Zyro Online",
 };
 
 export default function Page() {
@@ -12,7 +12,7 @@ export default function Page() {
       {/* Header */}
       <div className="w-full max-w-sm mb-6">
         <Link href="/" className="text-2xl font-bold text-center block">
-          ZERO
+          Zyro
         </Link>
       </div>
 

@@ -2,8 +2,8 @@ import { LoginForm } from "@/components/login-form";
 import Link from "next/link";
 
 export const metadata = {
-  title: "Iniciar Sesión | ZERO",
-  description: "Inicia sesión en tu cuenta de ZERO",
+  title: "Iniciar Sesión | Zyro Online",
+  description: "Inicia sesión en tu cuenta de Zyro Online",
 };
 
 export default async function Page({
@@ -21,7 +21,7 @@ export default async function Page({
       {/* Header */}
       <div className="w-full max-w-sm mb-6">
         <Link href="/" className="text-2xl font-bold text-center block">
-          ZERO
+          Zyro
         </Link>
       </div>
 

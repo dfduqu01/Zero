@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Package } from 'lucide-react';
 import { SiteHeader } from '@/components/site-header';
+import { SiteFooter } from '@/components/site-footer';
 
 export default async function OrdersPage() {
   const supabase = await createClient();
@@ -62,9 +63,9 @@ export default async function OrdersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <SiteHeader />
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="flex-1 max-w-6xl mx-auto px-4 py-8 w-full">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Mis Pedidos</h1>
@@ -208,6 +209,7 @@ export default async function OrdersPage() {
           </Card>
         )}
       </div>
+      <SiteFooter />
     </div>
   );
 }

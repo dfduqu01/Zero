@@ -82,9 +82,10 @@ export interface CheckoutSession {
   orderNumber: string;                       // Pre-generated order number
   paymentLinkCode?: string;                  // LK-XXX from PagueloFacil
   addressId: string;                         // Selected shipping address
-  shippingMethod: string;                    // "standard" or "express"
+  shippingMethod: string;                    // "delivery", "pickup", or "international"
   cartSnapshot: any[];                       // Full cart data (in case we need to restore)
   amount: number;                            // Total amount
+  shippingCost?: number;                     // Shipping cost calculated at checkout
   status?: 'pending' | 'completed' | 'failed' | 'expired';
   createdAt?: string;
   expiresAt?: string;
@@ -125,6 +126,7 @@ export interface SaveSessionRequest {
   shippingMethod: string;
   cartItems: any[];
   amount: number;
+  shippingCost?: number;                     // Shipping cost calculated at checkout
 }
 
 /**

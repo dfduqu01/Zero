@@ -243,7 +243,7 @@ export default function ProductForm({
                 name="sku"
                 value={formData.sku}
                 onChange={handleInputChange}
-                placeholder="ZERO-001"
+                placeholder="ZYRO-001"
                 disabled={isEditing}
                 className={`w-full px-3 py-2 border rounded-md ${
                   errors.sku ? 'border-red-500' : 'border-gray-300'
@@ -261,7 +261,7 @@ export default function ProductForm({
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                placeholder="ZERO Signature Acetato"
+                placeholder="Zyro Signature Acetato"
                 className={`w-full px-3 py-2 border rounded-md ${
                   errors.name ? 'border-red-500' : 'border-gray-300'
                 }`}

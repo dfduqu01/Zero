@@ -125,13 +125,29 @@ export default function ProductDetailClient({
         // USER IS LOGGED IN - Save to database
         console.log('🛒 User logged in, saving to database');
 
-        // Insert cart item
+        // Calculate unit price including prescription costs
+        let unitPrice = product.price;
+
+        if (prescriptionData) {
+          const selectedLensType = lensTypes.find(lt => lt.id === prescriptionData.lens_type_id);
+          const selectedLensIndex = lensIndexes.find(li => li.id === prescriptionData.lens_index_id);
+          const selectedViewArea = viewAreas.find(va => va.id === prescriptionData.view_area_id);
+
+          unitPrice += selectedLensType?.price_modifier || 0;
+          unitPrice += selectedLensIndex?.price_modifier || 0;
+          unitPrice += selectedViewArea?.price_modifier || 0;
+        }
+
+        console.log('💰 Calculated unit price:', unitPrice, '(base:', product.price, ')');
+
+        // Insert cart item with calculated unit_price
         const { data: dbCartItem, error: cartError } = await supabase
           .from('cart_items')
           .insert({
             user_id: user.id,
             product_id: product.id,
             quantity,
+            unit_price: unitPrice,
           })
           .select()
           .single();

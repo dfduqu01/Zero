@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: ProductDetailPageProps) {
     .single();
 
   return {
-    title: product ? `${product.name} | ZERO` : 'Producto | ZERO',
+    title: product ? `${product.name} | Zyro Online` : 'Producto | Zyro Online',
     description: product?.description || 'Descubre nuestras gafas premium',
   };
 }
@@ -30,12 +30,12 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   const { id } = await params;
   const supabase = await createClient();
 
-  // Fetch product with all related data
+  // Fetch product with all related data (only from active brands)
   const { data: product, error } = await supabase
     .from('products')
     .select(`
       *,
-      brand:brands(id, name, slug),
+      brand:brands!inner(id, name, slug, is_active),
       category:categories(id, name, slug),
       frame_material:frame_materials(id, name),
       frame_shape:frame_shapes(id, name),
@@ -43,6 +43,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
     `)
     .eq('id', id)
     .eq('is_active', true)
+    .eq('brand.is_active', true)
     .single();
 
   if (error || !product) {
@@ -108,7 +109,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
       <footer className="bg-white border-t mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center text-sm text-gray-500">
-            <p>&copy; 2025 ZERO Eyewear. Todos los derechos reservados.</p>
+            <p>&copy; {new Date().getFullYear()} Zyro Online. Todos los derechos reservados.</p>
           </div>
         </div>
       </footer>

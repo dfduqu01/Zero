@@ -41,7 +41,8 @@ export class ErpSyncService {
     syncType: 'scheduled' | 'manual' = 'manual',
     testLimit: number | null = null,
     shippingCost: number = 25,
-    jobId?: string | null
+    jobId?: string | null,
+    existingSyncLogId?: string | null
   ): Promise<SyncResult> {
     const startTime = Date.now();
     let syncLogId: string | null = null;
@@ -51,10 +52,23 @@ export class ErpSyncService {
     console.log('[ERP Sync] Shipping cost:', shippingCost);
 
     try {
-      // Step 1: Initialize sync log
+      // Step 1: Initialize sync log (use existing if provided, otherwise create new)
       await this.updateJobProgress(jobId, 5, 'Initializing sync log...');
-      syncLogId = await this.createSyncLog(syncType);
-      console.log('[ERP Sync] Step 1 complete - Sync log created');
+      if (existingSyncLogId) {
+        syncLogId = existingSyncLogId;
+        // Update existing sync log to running status
+        await this.supabase
+          .from('erp_sync_logs')
+          .update({
+            status: 'running',
+            started_at: new Date().toISOString(),
+          })
+          .eq('id', syncLogId);
+        console.log('[ERP Sync] Step 1 complete - Using existing sync log:', syncLogId);
+      } else {
+        syncLogId = await this.createSyncLog(syncType);
+        console.log('[ERP Sync] Step 1 complete - Created new sync log:', syncLogId);
+      }
 
       // Step 2: Load pricing tiers
       await this.updateJobProgress(jobId, 10, 'Loading pricing tiers...');
@@ -198,7 +212,7 @@ export class ErpSyncService {
     const [dubrosCategories, dubrosBrands, dubrosMaterials] = await Promise.all([
       this.dubrosClient.fetchCategories({ maxRecords: 200 }),
       this.dubrosClient.fetchBrands({ maxRecords: 200 }),
-      this.dubrosClient.fetchMaterials({ maxRecords: 200 }),
+      this.dubrosClient.fetchMaterials({ maxRecords: 200 }), // Only ~18 materials exist in dubros
     ]);
 
     console.log(`[ERP Sync] Fetched ${dubrosCategories.length} categories`);
@@ -661,39 +675,96 @@ export class ErpSyncService {
    * Deactivate products that are not in the current sync
    * This marks them as inactive and sets stock to 0
    * (Option A: Products missing from dubros.com are considered out of stock)
+   *
+   * FIX: Batch deactivation to avoid 414 Request-URI Too Large error
+   * Strategy: Fetch all active ERP products, filter in memory, then batch deactivate
    */
   private async deactivateMissingProducts(syncedProducts: ZeroProduct[]): Promise<number> {
     try {
       // Get all ERP IDs from the current sync
-      const syncedErpIds = syncedProducts
-        .map(p => p.erp_id)
-        .filter(Boolean) as string[];
+      const syncedErpIds = new Set(
+        syncedProducts
+          .map(p => p.erp_id)
+          .filter(Boolean) as string[]
+      );
 
-      if (syncedErpIds.length === 0) {
+      if (syncedErpIds.size === 0) {
         console.log('[ERP Sync] No ERP IDs to compare - skipping deactivation');
         return 0;
       }
 
-      // Update products that have an erp_id but are NOT in the current sync
-      // Set is_active = false and stock_quantity = 0
-      const { data, error } = await this.supabase
-        .from('products')
-        .update({
-          is_active: false,
-          stock_quantity: 0,
-          erp_last_synced_at: new Date().toISOString(),
-        })
-        .not('erp_id', 'is', null) // Only products that came from ERP
-        .not('erp_id', 'in', `(${syncedErpIds.join(',')})`) // NOT in current sync
-        .eq('is_active', true) // Only update currently active products
-        .select('id');
+      console.log(`[ERP Sync] Finding products to deactivate (not in ${syncedErpIds.size} synced products)...`);
 
-      if (error) {
-        console.error('[ERP Sync] Failed to deactivate missing products:', error);
+      // Step 1: Fetch ALL active products that have an erp_id
+      // We filter in memory to avoid URI length issues with large NOT IN clauses
+      const { data: allActiveErpProducts, error: fetchError } = await this.supabase
+        .from('products')
+        .select('id, sku, erp_id')
+        .not('erp_id', 'is', null) // Only products that came from ERP
+        .eq('is_active', true); // Only currently active products
+
+      if (fetchError) {
+        console.error('[ERP Sync] Failed to fetch active ERP products:', fetchError);
         return 0;
       }
 
-      return data?.length || 0;
+      if (!allActiveErpProducts || allActiveErpProducts.length === 0) {
+        console.log('[ERP Sync] No active ERP products found');
+        return 0;
+      }
+
+      console.log(`[ERP Sync] Fetched ${allActiveErpProducts.length} active ERP products`);
+
+      // Step 2: Filter in memory to find products NOT in current sync
+      const productsToDeactivate = allActiveErpProducts.filter(
+        product => product.erp_id && !syncedErpIds.has(product.erp_id)
+      );
+
+      if (productsToDeactivate.length === 0) {
+        console.log('[ERP Sync] No products need deactivation');
+        return 0;
+      }
+
+      console.log(`[ERP Sync] Found ${productsToDeactivate.length} products to deactivate`);
+
+      // Step 3: Deactivate products in batches of 50 to avoid URI length issues
+      const batchSize = 50;
+      let totalDeactivated = 0;
+
+      for (let i = 0; i < productsToDeactivate.length; i += batchSize) {
+        const batch = productsToDeactivate.slice(i, i + batchSize);
+        const batchIds = batch.map(p => p.id);
+
+        console.log(`[ERP Sync] Deactivating batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(productsToDeactivate.length / batchSize)} (${batch.length} products)...`);
+
+        const { data, error } = await this.supabase
+          .from('products')
+          .update({
+            is_active: false,
+            stock_quantity: 0,
+            erp_last_synced_at: new Date().toISOString(),
+          })
+          .in('id', batchIds)
+          .select('id, sku');
+
+        if (error) {
+          console.error(`[ERP Sync] Failed to deactivate batch:`, error);
+          // Continue with next batch even if this one fails
+          continue;
+        }
+
+        const deactivatedCount = data?.length || 0;
+        totalDeactivated += deactivatedCount;
+
+        // Log SKUs for audit trail
+        if (data && data.length > 0) {
+          const skus = data.map(p => p.sku).join(', ');
+          console.log(`[ERP Sync] Batch deactivated ${deactivatedCount} products: ${skus}`);
+        }
+      }
+
+      console.log(`[ERP Sync] Total deactivated: ${totalDeactivated} products`);
+      return totalDeactivated;
     } catch (error) {
       console.error('[ERP Sync] Error in deactivateMissingProducts:', error);
       return 0;

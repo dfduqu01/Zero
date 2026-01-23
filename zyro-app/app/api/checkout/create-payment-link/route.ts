@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     // Build enhanced description with product details
-    let enhancedDescription = `ZERO Optical - Order #${orderNumber}`;
+    let enhancedDescription = `Zyro Online - Order #${orderNumber}`;
 
     if (session?.cart_snapshot) {
       const cartItems = session.cart_snapshot as any[];

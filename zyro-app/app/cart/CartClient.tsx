@@ -278,10 +278,9 @@ export default function CartClient() {
     return sum;
   }, 0);
 
-  const shippingEstimate = 15.0; // Flat rate for now
   const taxRate = 0; // No tax for now
   const taxAmount = (subtotal + prescriptionTotal) * taxRate;
-  const grandTotal = subtotal + prescriptionTotal + shippingEstimate + taxAmount;
+  const grandTotal = subtotal + prescriptionTotal + taxAmount;
 
   if (isLoading) {
     return (
@@ -491,12 +490,6 @@ export default function CartClient() {
               </div>
             )}
 
-            {/* Shipping */}
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-600">Envío (estimado)</span>
-              <span className="font-medium text-gray-900">${shippingEstimate.toFixed(2)}</span>
-            </div>
-
             {/* Tax (if applicable) */}
             {taxAmount > 0 && (
               <div className="flex items-center justify-between text-sm">
@@ -504,6 +497,11 @@ export default function CartClient() {
                 <span className="font-medium text-gray-900">${taxAmount.toFixed(2)}</span>
               </div>
             )}
+
+            {/* Shipping Note */}
+            <div className="text-sm text-gray-500 italic">
+              Envío calculado en el checkout
+            </div>
           </div>
 
           {/* Total */}

@@ -31,8 +31,7 @@ export async function GET() {
     // Create a test payment link
     const result = await client.createPaymentLink({
       amount: 1.00, // $1.00 test
-      taxAmount: 0.00,
-      description: 'ZERO Optical - Test Payment Link',
+      description: 'Zyro Online - Test Payment Link',
       returnUrl: 'http://localhost:3000/api/checkout/payment-callback',
       orderNumber: `TEST-${Date.now()}`,
       expiresIn: 3600,

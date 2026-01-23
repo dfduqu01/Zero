@@ -54,6 +54,17 @@ interface CartItem {
 }
 
 
+interface ShippingConfig {
+  panamaDelivery: number;
+  panamaPickup: number;
+  international: number;
+  pickupLocation: {
+    address: string;
+    hours: string;
+    note: string;
+  };
+}
+
 interface CheckoutClientProps {
   user: User;
   addresses: Address[];
@@ -62,6 +73,7 @@ interface CheckoutClientProps {
   lensIndexes: LensIndex[];
   viewAreas: ViewArea[];
   prescriptionTypes: PrescriptionType[];
+  shippingConfig: ShippingConfig;
 }
 
 type CheckoutStep = 'shipping' | 'method' | 'review';
@@ -74,6 +86,7 @@ export default function CheckoutClient({
   lensIndexes,
   viewAreas,
   prescriptionTypes,
+  shippingConfig,
 }: CheckoutClientProps) {
   const router = useRouter();
   const supabase = createClient();
@@ -83,9 +96,20 @@ export default function CheckoutClient({
     addresses.find((a) => a.is_default)?.id || addresses[0]?.id || null
   );
   const [isAddingAddress, setIsAddingAddress] = useState(false);
-  const [shippingMethod, setShippingMethod] = useState<string>('standard');
+  const [shippingMethod, setShippingMethod] = useState<string>('delivery');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Reset shipping method when address changes (pickup only available for Panama)
+  useEffect(() => {
+    const selectedAddress = addresses.find((a) => a.id === selectedAddressId);
+    const isPanama = selectedAddress?.country === 'Panamá' || selectedAddress?.country === 'Panama';
+
+    // If not Panama and pickup is selected, switch to delivery
+    if (!isPanama && shippingMethod === 'pickup') {
+      setShippingMethod('delivery');
+    }
+  }, [selectedAddressId, addresses, shippingMethod]);
 
   // Check for payment errors in URL
   useEffect(() => {
@@ -161,11 +185,16 @@ export default function CheckoutClient({
       return sum + itemPrescriptionCost * item.quantity;
     }, 0);
 
-    // Shipping costs based on method
-    const shippingCost =
-      shippingMethod === 'express' ? 25.0 :
-      shippingMethod === 'no_delivery' ? 0.0 :
-      15.0; // standard
+    // Shipping costs based on selected address country and method
+    const selectedAddress = addresses.find((a) => a.id === selectedAddressId);
+    const isPanama = selectedAddress?.country === 'Panamá' || selectedAddress?.country === 'Panama';
+
+    let shippingCost: number;
+    if (isPanama) {
+      shippingCost = shippingMethod === 'pickup' ? shippingConfig.panamaPickup : shippingConfig.panamaDelivery;
+    } else {
+      shippingCost = shippingConfig.international;
+    }
 
     const total = subtotal + prescriptionCosts + shippingCost;
 
@@ -266,7 +295,7 @@ export default function CheckoutClient({
       }
 
       // 2. Generate order number
-      const orderNumber = `ZERO-${new Date().getFullYear()}-${String(
+      const orderNumber = `ZYRO-${new Date().getFullYear()}-${String(
         Math.floor(Math.random() * 100000)
       ).padStart(5, '0')}`;
 
@@ -294,6 +323,7 @@ export default function CheckoutClient({
             prescription: item.prescription,
           })),
           amount: totals.total,
+          shippingCost: totals.shippingCost,
         }),
       });
 
@@ -311,7 +341,7 @@ export default function CheckoutClient({
         body: JSON.stringify({
           amount: totals.total,
           orderNumber,
-          description: `ZERO Optical - Order #${orderNumber}`,
+          description: `Zyro Online - Order #${orderNumber}`,
         }),
       });
 
@@ -566,70 +596,89 @@ export default function CheckoutClient({
             )}
 
             {/* Step 2: Shipping Method */}
-            {currentStep === 'method' && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Método de Envío</CardTitle>
-                  <CardDescription>
-                    Selecciona el método de envío que prefieras
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div
-                      className={`p-4 border rounded-lg cursor-pointer transition ${
-                        shippingMethod === 'standard'
-                          ? 'border-blue-600 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                      onClick={() => setShippingMethod('standard')}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-semibold">Envío Estándar</p>
-                          <p className="text-sm text-gray-600">Entrega en 7-10 días hábiles</p>
-                        </div>
-                        <span className="font-semibold">$15.00</span>
-                      </div>
-                    </div>
+            {currentStep === 'method' && (() => {
+              const selectedAddr = addresses.find((a) => a.id === selectedAddressId);
+              const isPanamaAddr = selectedAddr?.country === 'Panamá' || selectedAddr?.country === 'Panama';
 
-                    <div
-                      className={`p-4 border rounded-lg cursor-pointer transition ${
-                        shippingMethod === 'express'
-                          ? 'border-blue-600 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                      onClick={() => setShippingMethod('express')}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-semibold">Envío Express</p>
-                          <p className="text-sm text-gray-600">Entrega en 3-5 días hábiles</p>
-                        </div>
-                        <span className="font-semibold">$25.00</span>
-                      </div>
-                    </div>
+              return (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Método de Envío</CardTitle>
+                    <CardDescription>
+                      {isPanamaAddr
+                        ? 'Selecciona envío a domicilio o recoger en tienda'
+                        : 'Envío internacional a tu dirección'}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {isPanamaAddr ? (
+                        <>
+                          {/* Panama: Delivery option */}
+                          <div
+                            className={`p-4 border rounded-lg cursor-pointer transition ${
+                              shippingMethod === 'delivery'
+                                ? 'border-blue-600 bg-blue-50'
+                                : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                            onClick={() => setShippingMethod('delivery')}
+                          >
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <p className="font-semibold">Envío a Domicilio</p>
+                                <p className="text-sm text-gray-600">Entrega en 3-5 días hábiles</p>
+                              </div>
+                              <span className="font-semibold">${shippingConfig.panamaDelivery.toFixed(2)}</span>
+                            </div>
+                          </div>
 
-                    <div
-                      className={`p-4 border rounded-lg cursor-pointer transition ${
-                        shippingMethod === 'no_delivery'
-                          ? 'border-blue-600 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                      onClick={() => setShippingMethod('no_delivery')}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-semibold">Sin Envío (Testing)</p>
-                          <p className="text-sm text-gray-600">Solo para productos de prueba</p>
+                          {/* Panama: Pickup option */}
+                          <div
+                            className={`p-4 border rounded-lg cursor-pointer transition ${
+                              shippingMethod === 'pickup'
+                                ? 'border-blue-600 bg-blue-50'
+                                : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                            onClick={() => setShippingMethod('pickup')}
+                          >
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <p className="font-semibold">Recoger en Tienda</p>
+                                <p className="text-sm text-gray-600">{shippingConfig.pickupLocation.address}</p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Horario: {shippingConfig.pickupLocation.hours}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {shippingConfig.pickupLocation.note}
+                                </p>
+                              </div>
+                              <span className="font-semibold text-green-600">GRATIS</span>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        /* International: Only delivery option */
+                        <div
+                          className={`p-4 border rounded-lg cursor-pointer transition border-blue-600 bg-blue-50`}
+                          onClick={() => setShippingMethod('delivery')}
+                        >
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <p className="font-semibold">Envío Internacional</p>
+                              <p className="text-sm text-gray-600">Entrega en 7-14 días hábiles</p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                Envío a {selectedAddr?.country || 'tu país'}
+                              </p>
+                            </div>
+                            <span className="font-semibold">${shippingConfig.international.toFixed(2)}</span>
+                          </div>
                         </div>
-                        <span className="font-semibold text-green-600">GRATIS</span>
-                      </div>
+                      )}
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+                  </CardContent>
+                </Card>
+              );
+            })()}
 
             {/* Step 3: Review */}
             {currentStep === 'review' && (
@@ -669,9 +718,20 @@ export default function CheckoutClient({
                     <div>
                       <h3 className="font-semibold mb-2">Método de Envío</h3>
                       <p className="text-sm text-gray-600">
-                        {shippingMethod === 'express' ? 'Envío Express' : 'Envío Estándar'} - $
-                        {totals.shippingCost.toFixed(2)}
+                        {shippingMethod === 'pickup'
+                          ? 'Recoger en Tienda'
+                          : (() => {
+                              const addr = addresses.find((a) => a.id === selectedAddressId);
+                              const isPanama = addr?.country === 'Panamá' || addr?.country === 'Panama';
+                              return isPanama ? 'Envío a Domicilio' : 'Envío Internacional';
+                            })()
+                        } - ${totals.shippingCost.toFixed(2)}
                       </p>
+                      {shippingMethod === 'pickup' && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          {shippingConfig.pickupLocation.address}
+                        </p>
+                      )}
                     </div>
 
                     {/* Cart Items */}

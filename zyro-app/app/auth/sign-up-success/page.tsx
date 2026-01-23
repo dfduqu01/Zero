@@ -8,7 +8,7 @@ import {
 import Link from "next/link";
 
 export const metadata = {
-  title: "Registro Exitoso | ZERO",
+  title: "Registro Exitoso | Zyro Online",
   description: "Tu cuenta ha sido creada exitosamente",
 };
 
@@ -18,7 +18,7 @@ export default function Page() {
       {/* Header */}
       <div className="w-full max-w-sm mb-6">
         <Link href="/" className="text-2xl font-bold text-center block">
-          ZERO
+          Zyro
         </Link>
       </div>
 

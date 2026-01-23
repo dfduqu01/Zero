@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
 
     // 2. Parse and validate request
     const body = (await request.json()) as SaveSessionRequest;
-    const { orderNumber, addressId, shippingMethod, cartItems, amount } = body;
+    const { orderNumber, addressId, shippingMethod, cartItems, amount, shippingCost } = body;
 
     // Validate required fields
     if (!orderNumber || !addressId || !shippingMethod || !cartItems || !amount) {
@@ -78,6 +78,7 @@ export async function POST(request: NextRequest) {
       userId: user.id,
       itemCount: cartItems.length,
       amount,
+      shippingCost,
     });
 
     // 3. Save session to database
@@ -90,6 +91,7 @@ export async function POST(request: NextRequest) {
         shipping_method: shippingMethod,
         cart_snapshot: cartItems,
         amount,
+        shipping_cost: shippingCost || 0,
         status: 'pending',
       })
       .select()
@@ -131,6 +133,7 @@ export async function POST(request: NextRequest) {
           shippingMethod: session.shipping_method,
           cartSnapshot: session.cart_snapshot,
           amount: parseFloat(session.amount),
+          shippingCost: parseFloat(session.shipping_cost || '0'),
           status: session.status,
           createdAt: session.created_at,
           expiresAt: session.expires_at,
@@ -246,6 +249,7 @@ export async function GET(request: NextRequest) {
           shippingMethod: session.shipping_method,
           cartSnapshot: session.cart_snapshot,
           amount: parseFloat(session.amount),
+          shippingCost: parseFloat(session.shipping_cost || '0'),
           status: session.status,
           createdAt: session.created_at,
           expiresAt: session.expires_at,

@@ -244,7 +244,7 @@ export default function ProductFilters({
             </select>
           </div>
 
-          {/* Shape */}
+          {/* Shape - Hidden until database is populated
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Forma
@@ -262,6 +262,7 @@ export default function ProductFilters({
               ))}
             </select>
           </div>
+          */}
 
           {/* Price Range */}
           <div>

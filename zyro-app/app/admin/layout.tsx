@@ -13,6 +13,7 @@ import {
   RefreshCw,
   DollarSign,
   Calculator,
+  Tags,
 } from 'lucide-react';
 
 export default async function AdminLayout({
@@ -51,7 +52,7 @@ export default async function AdminLayout({
         {/* Logo/Brand */}
         <div className="p-6 border-b border-gray-800">
           <Link href="/admin" className="text-2xl font-bold">
-            ZERO Admin
+            Zyro Admin
           </Link>
           <p className="text-sm text-gray-400 mt-1">{userData.name}</p>
         </div>
@@ -72,6 +73,10 @@ export default async function AdminLayout({
 
           <NavLink href="/admin/products" icon={<Package size={20} />}>
             Products
+          </NavLink>
+
+          <NavLink href="/admin/brands" icon={<Tags size={20} />}>
+            Brands
           </NavLink>
 
           <NavLink href="/admin/inventory" icon={<Warehouse size={20} />}>

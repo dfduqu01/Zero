@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import CheckoutClient from './CheckoutClient';
 import { SiteHeader } from '@/components/site-header';
+import { SiteFooter } from '@/components/site-footer';
 
 export default async function CheckoutPage() {
   const supabase = await createClient();
@@ -31,8 +32,8 @@ export default async function CheckoutPage() {
     .order('is_default', { ascending: false })
     .order('created_at', { ascending: false });
 
-  // Fetch cart items with full details and prescription metadata tables
-  const [cartResult, lensTypesResult, lensIndexesResult, viewAreasResult, prescriptionTypesResult] = await Promise.all([
+  // Fetch cart items with full details, prescription metadata tables, and shipping config
+  const [cartResult, lensTypesResult, lensIndexesResult, viewAreasResult, prescriptionTypesResult, shippingConfigResult] = await Promise.all([
     supabase
       .from('cart_items')
       .select(`
@@ -54,6 +55,13 @@ export default async function CheckoutPage() {
     supabase.from('lens_indexes').select('*'),
     supabase.from('view_areas').select('*'),
     supabase.from('prescription_types').select('*'),
+    // Get latest shipping cost from pricing recalculation logs
+    supabase
+      .from('pricing_recalculation_logs')
+      .select('shipping_cost')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single(),
   ]);
 
   const cartItems = cartResult.data;
@@ -61,6 +69,9 @@ export default async function CheckoutPage() {
   const lensIndexes = lensIndexesResult.data || [];
   const viewAreas = viewAreasResult.data || [];
   const prescriptionTypes = prescriptionTypesResult.data || [];
+
+  // Shipping configuration: Panama = $8, other countries = from pricing config (default $25)
+  const internationalShippingCost = shippingConfigResult.data?.shipping_cost ?? 25;
 
   // Fetch prescription data and product images for each cart item
   const cartItemsWithPrescriptions = await Promise.all(
@@ -105,20 +116,33 @@ export default async function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <SiteHeader />
-      <CheckoutClient
-        user={{
-          ...userData,
-          email: user.email, // Include email from auth user
-        }}
-        addresses={addresses || []}
-        cartItems={cartItemsWithPrescriptions}
-        lensTypes={lensTypes}
-        lensIndexes={lensIndexes}
-        viewAreas={viewAreas}
-        prescriptionTypes={prescriptionTypes}
-      />
+      <div className="flex-1">
+        <CheckoutClient
+          user={{
+            ...userData,
+            email: user.email, // Include email from auth user
+          }}
+          addresses={addresses || []}
+          cartItems={cartItemsWithPrescriptions}
+          lensTypes={lensTypes}
+          lensIndexes={lensIndexes}
+          viewAreas={viewAreas}
+          prescriptionTypes={prescriptionTypes}
+          shippingConfig={{
+            panamaDelivery: 8,
+            panamaPickup: 0,
+            international: internationalShippingCost,
+            pickupLocation: {
+              address: 'Ave. Omar Torrijos Herrera CC Terrazas de Albrook, Local B15, Panamá',
+              hours: '9:00 AM - 5:00 PM',
+              note: 'Disponible para recoger 24 horas después de realizar el pedido',
+            },
+          }}
+        />
+      </div>
+      <SiteFooter />
     </div>
   );
 }

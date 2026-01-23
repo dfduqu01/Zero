@@ -2,9 +2,10 @@ import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import ProductsClient from './ProductsClient';
 import { SiteHeader } from '@/components/site-header';
+import { SiteFooter } from '@/components/site-footer';
 
 export const metadata = {
-  title: 'Productos | ZERO',
+  title: 'Productos | Zyro Online',
   description: 'Explora nuestra colección de gafas premium',
 };
 
@@ -25,13 +26,14 @@ export default async function ProductsPage() {
       .from('products')
       .select(`
         *,
-        brand:brands(id, name, slug),
+        brand:brands!inner(id, name, slug, is_active),
         category:categories(id, name, slug),
         frame_material:frame_materials(id, name),
         frame_shape:frame_shapes(id, name),
         product_images(id, image_url, cloudfront_url, display_order)
       `)
       .eq('is_active', true)
+      .eq('brand.is_active', true)
       .order('created_at', { ascending: false})
       .range(offset, offset + CHUNK_SIZE - 1);
 
@@ -62,14 +64,14 @@ export default async function ProductsPage() {
   const products = Array.from(productMap.values());
   const productsError = products.length === 0 ? new Error('No products found') : null;
 
-  // Fetch filter options
+  // Fetch filter options (only active brands)
   const [
     { data: brands },
     { data: categoriesRaw },
     { data: materials },
     { data: shapes }
   ] = await Promise.all([
-    supabase.from('brands').select('id, name, slug').order('name'),
+    supabase.from('brands').select('id, name, slug').eq('is_active', true).order('name'),
     supabase.from('categories').select('id, name, slug').order('display_order'),
     supabase.from('frame_materials').select('id, name').order('name'),
     supabase.from('frame_shapes').select('id, name').order('name'),
@@ -94,12 +96,12 @@ export default async function ProductsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
       <SiteHeader />
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Todos los Productos</h1>
@@ -130,13 +132,7 @@ export default async function ProductsPage() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center text-sm text-gray-500">
-            <p>&copy; 2025 ZERO Eyewear. Todos los derechos reservados.</p>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

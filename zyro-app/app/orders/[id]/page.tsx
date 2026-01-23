@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Package, Truck, CheckCircle2, Clock } from 'lucide-react';
 import { SiteHeader } from '@/components/site-header';
+import { SiteFooter } from '@/components/site-footer';
 import PrescriptionSummary from '@/components/PrescriptionSummary';
 
 export default async function OrderDetailPage({
@@ -135,9 +136,9 @@ export default async function OrderDetailPage({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <SiteHeader />
-      <div className="max-w-5xl mx-auto px-4 py-8">
+      <div className="flex-1 max-w-5xl mx-auto px-4 py-8 w-full">
         {/* Header */}
         <div className="mb-6">
           <Link
@@ -471,6 +472,7 @@ export default async function OrderDetailPage({
           </div>
         </div>
       </div>
+      <SiteFooter />
     </div>
   );
 }

@@ -22,6 +22,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import type { PaymentCallbackParams } from '@/lib/types/payment';
 import { sendOrderConfirmationEmail } from '@/lib/email/email-service';
+import { buildPrescriptionEmailData, calculateItemPrices } from '@/lib/email/email-helpers';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -123,22 +124,87 @@ export async function GET(request: NextRequest) {
         })
         .eq('id', session.id);
 
-      // Calculate shipping cost based on method
-      const shippingCost =
-        session.shipping_method === 'express' ? 25.0 :
-        session.shipping_method === 'no_delivery' ? 0.0 :
-        15.0; // standard
+      // Use shipping cost stored in session (calculated at checkout time)
+      // Fallback to 0 if not set (shouldn't happen for new orders)
+      const shippingCost = parseFloat(session.shipping_cost) || 0;
 
-      // Create order
+      // Fetch prescription lookup tables for correct pricing
+      const [lensTypesResult, lensIndexesResult, viewAreasResult] = await Promise.all([
+        supabase.from('lens_types').select('id, price_modifier'),
+        supabase.from('lens_indexes').select('id, price_modifier'),
+        supabase.from('view_areas').select('id, price_modifier'),
+      ]);
+
+      const lensTypesMap = new Map((lensTypesResult.data || []).map(lt => [lt.id, lt.price_modifier]));
+      const lensIndexesMap = new Map((lensIndexesResult.data || []).map(li => [li.id, li.price_modifier]));
+      const viewAreasMap = new Map((viewAreasResult.data || []).map(va => [va.id, va.price_modifier]));
+
+      // Calculate treatments cost (lenses and prescription upgrades)
+      // IMPORTANT: Recalculate unit_price from prescription data (fixes old cart items with wrong prices)
+      const cartSnapshot = session.cart_snapshot as any[];
+      console.log('[payment-callback] Cart snapshot:', JSON.stringify(cartSnapshot, null, 2));
+
+      const treatmentsCost = cartSnapshot.reduce((total: number, item: any) => {
+        const basePrice = item.product_snapshot?.price || 0;
+
+        // Recalculate unit_price from prescription data
+        let correctUnitPrice = basePrice;
+        if (item.prescription) {
+          const lensTypeCost = lensTypesMap.get(item.prescription.lens_type_id) || 0;
+          const lensIndexCost = lensIndexesMap.get(item.prescription.lens_index_id) || 0;
+          const viewAreaCost = viewAreasMap.get(item.prescription.view_area_id) || 0;
+          correctUnitPrice = basePrice + lensTypeCost + lensIndexCost + viewAreaCost;
+        }
+
+        const prescriptionCost = correctUnitPrice - basePrice;
+        console.log('[payment-callback] Item calc:', {
+          productName: item.product_snapshot?.name,
+          basePrice,
+          storedUnitPrice: item.unit_price,
+          correctedUnitPrice: correctUnitPrice,
+          prescriptionCost,
+          quantity: item.quantity,
+          itemTotal: prescriptionCost * item.quantity
+        });
+        return total + (prescriptionCost * item.quantity);
+      }, 0);
+
+      console.log('[payment-callback] Total treatments cost:', treatmentsCost);
+
+      // Fetch shipping address BEFORE creating order (for snapshot)
+      const { data: shippingAddress, error: addressError } = await supabase
+        .from('addresses')
+        .select('*')
+        .eq('id', session.address_id)
+        .single();
+
+      if (addressError || !shippingAddress) {
+        console.error('[payment-callback] Shipping address not found:', addressError);
+        return NextResponse.redirect(
+          new URL('/checkout?error=address_not_found', request.url)
+        );
+      }
+
+      // Create order with shipping address snapshot
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
           user_id: user.id,
           order_number: orderNumber,
-          shipping_address_id: session.address_id, // Fixed: use shipping_address_id
+          shipping_address_id: session.address_id,
+          shipping_address_snapshot: {
+            full_name: shippingAddress.full_name,
+            phone: shippingAddress.phone,
+            country: shippingAddress.country,
+            address_line_1: shippingAddress.address_line_1,
+            address_line_2: shippingAddress.address_line_2,
+            city: shippingAddress.city,
+            state_province: shippingAddress.state_province,
+            postal_code: shippingAddress.postal_code,
+          },
           shipping_method: session.shipping_method,
-          subtotal: session.amount - shippingCost, // Subtract shipping to get subtotal
-          treatments_cost: 0,
+          subtotal: session.amount - shippingCost - treatmentsCost, // Base products only
+          treatments_cost: treatmentsCost,
           shipping_cost: shippingCost,
           total: session.amount,
           payment_method: 'PagueloFacil',
@@ -159,7 +225,6 @@ export async function GET(request: NextRequest) {
       console.log('[payment-callback] Order created:', order.id);
 
       // Create order items from cart snapshot
-      const cartSnapshot = session.cart_snapshot as any[];
       const orderItems = cartSnapshot.map((item: any) => ({
         order_id: order.id,
         product_id: item.product_id,
@@ -247,20 +312,71 @@ export async function GET(request: NextRequest) {
 
       // Send order confirmation email
       try {
-        // Fetch user profile and shipping address for email
+        // Fetch user profile for email
         const { data: userProfile } = await supabase
           .from('users')
           .select('name')
           .eq('id', user.id)
           .single();
 
-        const { data: shippingAddress } = await supabase
-          .from('addresses')
-          .select('*')
-          .eq('id', session.address_id)
-          .single();
+        // shippingAddress already fetched above
+
+        // Fetch prescription lookup tables for email formatting
+        const [lensTypesResult, lensIndexesResult, viewAreasResult, prescriptionTypesResult] = await Promise.all([
+          supabase.from('lens_types').select('*'),
+          supabase.from('lens_indexes').select('*'),
+          supabase.from('view_areas').select('*'),
+          supabase.from('prescription_types').select('*'),
+        ]);
+
+        const lensTypes = lensTypesResult.data || [];
+        const lensIndexes = lensIndexesResult.data || [];
+        const viewAreas = viewAreasResult.data || [];
+        const prescriptionTypes = prescriptionTypesResult.data || [];
 
         if (userProfile && shippingAddress) {
+          // Build items with detailed prescription info
+          const emailItems = cartSnapshot.map((item: any) => {
+            const basePrice = item.product_snapshot?.price || 0;
+
+            // Recalculate correct unit_price from prescription data (same as above)
+            let correctUnitPrice = basePrice;
+            if (item.prescription) {
+              const lensTypeCost = lensTypesMap.get(item.prescription.lens_type_id) || 0;
+              const lensIndexCost = lensIndexesMap.get(item.prescription.lens_index_id) || 0;
+              const viewAreaCost = viewAreasMap.get(item.prescription.view_area_id) || 0;
+              correctUnitPrice = basePrice + lensTypeCost + lensIndexCost + viewAreaCost;
+            }
+
+            const baseData = {
+              name: item.product_snapshot?.name || 'Unknown Product',
+              sku: item.product_snapshot?.sku || 'N/A',
+              quantity: item.quantity,
+              basePrice: `$${basePrice.toFixed(2)}`,
+              totalPrice: `$${correctUnitPrice.toFixed(2)}`,  // Use corrected price
+            };
+
+            // Add prescription details if present
+            if (item.prescription) {
+              const prescriptionData = buildPrescriptionEmailData(
+                item.prescription,
+                lensTypes,
+                lensIndexes,
+                viewAreas,
+                prescriptionTypes
+              );
+
+              if (prescriptionData) {
+                return {
+                  ...baseData,
+                  prescription: prescriptionData,
+                };
+              }
+            }
+
+            return baseData;
+          });
+
           const emailData = {
             orderNumber: orderNumber,
             customerName: userProfile.name,
@@ -270,13 +386,7 @@ export async function GET(request: NextRequest) {
             subtotal: `$${order.subtotal.toFixed(2)}`,
             lensesCost: `$${order.treatments_cost.toFixed(2)}`,
             shippingCost: `$${order.shipping_cost.toFixed(2)}`,
-            items: cartSnapshot.map((item: any) => ({
-              name: item.product_snapshot?.name || 'Unknown Product',
-              sku: item.product_snapshot?.sku || 'N/A',
-              quantity: item.quantity,
-              price: `$${item.unit_price.toFixed(2)}`,
-              hasPrescription: !!item.prescription,
-            })),
+            items: emailItems,
             shippingAddress: {
               fullName: shippingAddress.full_name,
               addressLine1: shippingAddress.address_line_1,

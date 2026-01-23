@@ -55,7 +55,12 @@ export async function updateSession(request: NextRequest) {
     '/contact',
     '/terms',
     '/privacy',
+    '/shipping',
+    '/returns',
+    '/size-guide',
     '/cart', // Important for localStorage cart
+    '/landing-v1',
+    '/landing-v2',
   ];
 
   // Check if current path is a public route

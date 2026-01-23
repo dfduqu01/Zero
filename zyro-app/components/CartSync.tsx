@@ -48,25 +48,39 @@ export default function CartSync() {
 
           let cartItemId: string;
 
+          // Calculate unit price from localStorage item
+          let unitPrice = item.productPrice;
+          if (item.prescriptionCosts) {
+            unitPrice += item.prescriptionCosts.lensTypeCost || 0;
+            unitPrice += item.prescriptionCosts.lensIndexCost || 0;
+            unitPrice += item.prescriptionCosts.viewAreaCost || 0;
+          }
+
+          console.log('🛒 CartSync: Calculated unit_price:', unitPrice, '(base:', item.productPrice, ')');
+
           if (existingItem) {
-            // Update quantity (add localStorage quantity to database quantity)
+            // Update quantity AND unit_price (add localStorage quantity to database quantity)
             const newQuantity = existingItem.quantity + item.quantity;
 
             await supabase
               .from('cart_items')
-              .update({ quantity: newQuantity })
+              .update({
+                quantity: newQuantity,
+                unit_price: unitPrice
+              })
               .eq('id', existingItem.id);
 
             cartItemId = existingItem.id;
             console.log('🛒 CartSync: Updated existing item:', item.productName);
           } else {
-            // Insert new cart item
+            // Insert new cart item with calculated unit_price
             const { data: cartItem, error: cartError } = await supabase
               .from('cart_items')
               .insert({
                 user_id: user.id,
                 product_id: item.productId,
                 quantity: item.quantity,
+                unit_price: unitPrice,
               })
               .select()
               .single();

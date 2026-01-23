@@ -328,8 +328,14 @@ async function processJobInBackground(
       })
       .eq('id', jobId);
 
-    // Execute the sync (pass jobId for progress updates)
-    const result = await syncService.executeSync(syncType as 'manual' | 'scheduled', testLimit, 25, jobId);
+    // Execute the sync (pass jobId for progress updates and syncLogId to use existing log)
+    const result = await syncService.executeSync(
+      syncType as 'manual' | 'scheduled',
+      testLimit,
+      25,
+      jobId,
+      syncLogId
+    );
 
     // Update job as completed
     const finalStatus = result.success ? 'completed' : 'failed';

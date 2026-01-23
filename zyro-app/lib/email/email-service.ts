@@ -1,4 +1,5 @@
 import { sendGridClient } from './sendgrid-client';
+import type { PrescriptionEmailData } from './email-helpers';
 
 interface OrderEmailData {
   orderNumber: string;
@@ -13,8 +14,9 @@ interface OrderEmailData {
     name: string;
     sku: string;
     quantity: number;
-    price: string;
-    hasPrescription: boolean;
+    basePrice: string; // Frame price only
+    totalPrice: string; // With all prescription addons
+    prescription?: PrescriptionEmailData; // Detailed prescription info
   }>;
   shippingAddress: {
     fullName: string;
@@ -60,6 +62,8 @@ export async function sendOrderConfirmationEmail(data: OrderEmailData): Promise<
   return sendGridClient.sendEmail({
     to: data.customerEmail,
     templateId,
+    // Note: Subject must be configured in SendGrid template as:
+    // "Confirmación de Pedido - {{orderNumber}}"
     dynamicData: {
       customerName: data.customerName,
       orderNumber: data.orderNumber,
@@ -87,6 +91,8 @@ export async function sendOrderShippedEmail(data: ShippingEmailData): Promise<bo
   return sendGridClient.sendEmail({
     to: data.customerEmail,
     templateId,
+    // Note: Subject must be configured in SendGrid template as:
+    // "Tu Pedido Ha Sido Enviado - {{orderNumber}}"
     dynamicData: {
       customerName: data.customerName,
       orderNumber: data.orderNumber,
