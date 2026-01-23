@@ -10,6 +10,11 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
+export const metadata = {
+  title: 'Admin Dashboard',
+  description: 'Panel de administración de Zyro Online',
+};
+
 export default async function AdminDashboardPage() {
   const supabase = await createClient();
   const {

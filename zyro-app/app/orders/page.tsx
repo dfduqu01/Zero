@@ -7,6 +7,11 @@ import { Package } from 'lucide-react';
 import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
 
+export const metadata = {
+  title: 'Mis Pedidos',
+  description: 'Historial de tus pedidos en Zyro Online',
+};
+
 export default async function OrdersPage() {
   const supabase = await createClient();
 

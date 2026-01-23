@@ -4,6 +4,11 @@ import CheckoutClient from './CheckoutClient';
 import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
 
+export const metadata = {
+  title: 'Finalizar Compra',
+  description: 'Completa tu pedido en Zyro Online',
+};
+
 export default async function CheckoutPage() {
   const supabase = await createClient();
 

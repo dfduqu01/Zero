@@ -1,5 +1,10 @@
 import { ForgotPasswordForm } from "@/components/forgot-password-form";
 
+export const metadata = {
+  title: "Recuperar Contraseña",
+  description: "Recupera el acceso a tu cuenta de Zyro Online",
+};
+
 export default function Page() {
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
