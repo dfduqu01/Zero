@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { Settings } from 'lucide-react';
+import { Settings, ShoppingCart, User } from 'lucide-react';
+import { MobileMenu } from './mobile-menu';
 
 export async function SiteHeader() {
   const supabase = await createClient();
@@ -20,21 +21,20 @@ export async function SiteHeader() {
   }
 
   return (
-    <header className="bg-white border-b">
+    <header className="bg-white border-b sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between">
           <Link href="/" className="text-2xl font-bold">
             Zyro
           </Link>
-          <nav className="flex items-center gap-6">
+
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center gap-6">
             <Link href="/products" className="text-sm font-medium hover:text-gray-600">
               Productos
             </Link>
             <Link href="/about" className="text-sm font-medium hover:text-gray-600">
               Nosotros
-            </Link>
-            <Link href="/contact" className="text-sm font-medium hover:text-gray-600">
-              Contacto
             </Link>
             <Link href="/cart" className="text-sm font-medium hover:text-gray-600">
               Carrito
@@ -58,6 +58,17 @@ export async function SiteHeader() {
               </Link>
             )}
           </nav>
+
+          {/* Mobile Navigation */}
+          <div className="flex md:hidden items-center gap-4">
+            <Link href="/cart" className="p-2 hover:bg-gray-100 rounded-md">
+              <ShoppingCart className="h-5 w-5" />
+            </Link>
+            <Link href={user ? "/profile" : "/auth/login"} className="p-2 hover:bg-gray-100 rounded-md">
+              <User className="h-5 w-5" />
+            </Link>
+            <MobileMenu isAdmin={isAdmin} />
+          </div>
         </div>
       </div>
     </header>

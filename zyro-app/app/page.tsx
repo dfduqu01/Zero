@@ -52,7 +52,7 @@ export default async function Home() {
     <div className="min-h-screen bg-white">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-        <div className="container mx-auto flex h-16 items-center justify-between">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center space-x-2">
             <span className="text-2xl font-bold">Zyro</span>
           </Link>
@@ -70,22 +70,25 @@ export default async function Home() {
               Carrito
             </Link>
           </nav>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             {isAdmin && (
-              <Button variant="ghost" asChild>
+              <Button variant="ghost" asChild className="hidden sm:inline-flex">
                 <Link href="/admin">Admin</Link>
               </Button>
             )}
             {user ? (
-              <Button variant="ghost" asChild>
+              <Button variant="ghost" asChild className="hidden sm:inline-flex">
                 <Link href="/profile">Mi Perfil</Link>
               </Button>
             ) : (
-              <Button variant="ghost" asChild>
+              <Button variant="ghost" asChild className="hidden sm:inline-flex">
                 <Link href="/auth/login">Iniciar Sesión</Link>
               </Button>
             )}
-            <Button asChild>
+            <Button asChild size="sm" className="sm:hidden">
+              <Link href="/products">Colección</Link>
+            </Button>
+            <Button asChild className="hidden sm:inline-flex">
               <Link href="/products">Ver Colección</Link>
             </Button>
           </div>
@@ -93,11 +96,11 @@ export default async function Home() {
       </header>
 
       {/* Hero Section */}
-      <section className="container mx-auto py-24 md:py-32">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+      <section className="container mx-auto py-16 md:py-24 lg:py-32 overflow-hidden">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           <div className="space-y-8">
             <div className="space-y-4">
-              <h1 className="text-5xl md:text-6xl xl:text-7xl font-extrabold tracking-tight leading-tight">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-extrabold tracking-tight leading-tight">
                 CERO<br />
                 INTERMEDIARIOS<br />
                 CERO LÍMITES
@@ -114,22 +117,22 @@ export default async function Home() {
                 <Link href="#how-it-works">Cómo Funciona</Link>
               </Button>
             </div>
-            <div className="grid grid-cols-3 gap-4 pt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 pt-4">
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-foreground" />
+                <CheckCircle2 className="h-5 w-5 text-foreground flex-shrink-0" />
                 <span className="text-sm">Garantía 30 días</span>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-foreground" />
+                <CheckCircle2 className="h-5 w-5 text-foreground flex-shrink-0" />
                 <span className="text-sm">Receta en 7-10 días</span>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-foreground" />
+                <CheckCircle2 className="h-5 w-5 text-foreground flex-shrink-0" />
                 <span className="text-sm">Soporte WhatsApp</span>
               </div>
             </div>
           </div>
-          <div className="relative h-[350px] md:h-[450px] lg:h-[600px] rounded-lg overflow-hidden bg-muted">
+          <div className="relative h-[280px] sm:h-[350px] md:h-[400px] lg:h-[500px] xl:h-[550px] rounded-lg overflow-hidden bg-muted">
             <HeroCarousel />
           </div>
         </div>
