@@ -155,7 +155,7 @@ export default function PrescriptionForm({
             }}
             className="py-4 px-4 border-2 border-gray-300 rounded-lg hover:border-black hover:bg-gray-50 transition-all text-center"
           >
-            <div className="text-2xl mb-2">👓</div>
+            <div className="text-2xl mb-2">📝</div>
             <div className="font-semibold text-gray-900">Seleccionar Lentes</div>
             <div className="text-xs text-gray-600 mt-1">Con receta médica</div>
           </button>
@@ -173,7 +173,7 @@ export default function PrescriptionForm({
             }}
             className="py-4 px-4 border-2 border-gray-300 rounded-lg hover:border-black hover:bg-gray-50 transition-all text-center"
           >
-            <div className="text-2xl mb-2">🖼️</div>
+            <div className="text-2xl mb-2">👓</div>
             <div className="font-semibold text-gray-900">Solo el Marco</div>
             <div className="text-xs text-gray-600 mt-1">Sin lentes graduados</div>
           </button>
@@ -313,7 +313,7 @@ export default function PrescriptionForm({
             <p className="text-xs font-medium text-gray-700">Ojo Derecho (OD)</p>
             <div className="grid grid-cols-4 gap-2">
               <div>
-                <label className="text-xs text-gray-500">SPH</label>
+                <label className="text-xs text-gray-500">ESF</label>
                 <input
                   type="number"
                   step="0.25"
@@ -326,7 +326,7 @@ export default function PrescriptionForm({
                 />
               </div>
               <div>
-                <label className="text-xs text-gray-500">CYL</label>
+                <label className="text-xs text-gray-500">CIL</label>
                 <input
                   type="number"
                   step="0.25"
@@ -339,7 +339,7 @@ export default function PrescriptionForm({
                 />
               </div>
               <div>
-                <label className="text-xs text-gray-500">AXIS</label>
+                <label className="text-xs text-gray-500">EJE</label>
                 <input
                   type="number"
                   placeholder="22"
@@ -352,7 +352,7 @@ export default function PrescriptionForm({
               </div>
               {selectedPrescriptionType?.slug === 'progressive' && (
                 <div>
-                  <label className="text-xs text-gray-500">ADD</label>
+                  <label className="text-xs text-gray-500">ADIC</label>
                   <input
                     type="number"
                     step="0.25"
@@ -369,10 +369,10 @@ export default function PrescriptionForm({
           </div>
 
           <div className="space-y-2">
-            <p className="text-xs font-medium text-gray-700">Ojo Izquierdo (OS)</p>
+            <p className="text-xs font-medium text-gray-700">Ojo Izquierdo (OI)</p>
             <div className="grid grid-cols-4 gap-2">
               <div>
-                <label className="text-xs text-gray-500">SPH</label>
+                <label className="text-xs text-gray-500">ESF</label>
                 <input
                   type="number"
                   step="0.25"
@@ -385,7 +385,7 @@ export default function PrescriptionForm({
                 />
               </div>
               <div>
-                <label className="text-xs text-gray-500">CYL</label>
+                <label className="text-xs text-gray-500">CIL</label>
                 <input
                   type="number"
                   step="0.25"
@@ -398,7 +398,7 @@ export default function PrescriptionForm({
                 />
               </div>
               <div>
-                <label className="text-xs text-gray-500">AXIS</label>
+                <label className="text-xs text-gray-500">EJE</label>
                 <input
                   type="number"
                   placeholder="4"
@@ -411,7 +411,7 @@ export default function PrescriptionForm({
               </div>
               {selectedPrescriptionType?.slug === 'progressive' && (
                 <div>
-                  <label className="text-xs text-gray-500">ADD</label>
+                  <label className="text-xs text-gray-500">ADIC</label>
                   <input
                     type="number"
                     step="0.25"
