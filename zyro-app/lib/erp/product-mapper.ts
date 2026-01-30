@@ -78,13 +78,24 @@ export function calculatePerUnitCost(dubrosProduct: DubrosProduct): number {
 
 /**
  * Map dubros gender to ZERO gender enum
+ * Maps Spanish ERP values (FEMENINO, MASCULINO, UNISEX) to English database values
  */
 export function mapGender(generoParent: string | null): 'Male' | 'Female' | 'Unisex' | null {
   if (!generoParent) return null;
 
-  // TODO: Map actual dubros gender IDs when we get the lookup table
-  // For now, return null
-  return null;
+  const normalized = generoParent.toUpperCase().trim();
+
+  switch (normalized) {
+    case 'FEMENINO':
+      return 'Female';
+    case 'MASCULINO':
+      return 'Male';
+    case 'UNISEX':
+      return 'Unisex';
+    default:
+      console.warn(`[mapGender] Unknown gender value: ${generoParent}`);
+      return null;
+  }
 }
 
 // ============================================================================
@@ -228,9 +239,10 @@ export function mapProduct(
   }
 
   // Calculate pricing (if pricing service provided)
+  // Uses Formula 2: price = cost × markup (shipping charged separately at checkout)
   const dubrosCost = calculatePerUnitCost(dubrosProduct);
   const isByDozen = isSoldByDozen(dubrosProduct);
-  const pricing = pricingService ? pricingService.calculatePrice(dubrosCost, shippingCost) : null;
+  const pricing = pricingService ? pricingService.calculatePriceWithFormula(dubrosCost, shippingCost, 2) : null;
 
   // Map product fields
   const zeroProduct: ZeroProduct = {

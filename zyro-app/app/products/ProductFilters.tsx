@@ -37,6 +37,7 @@ export interface FilterState {
   brand: string;
   material: string;
   shape: string;
+  gender: string;
   minPrice: number;
   maxPrice: number;
   sortBy: string;
@@ -55,6 +56,7 @@ export default function ProductFilters({
     brand: 'all',
     material: 'all',
     shape: 'all',
+    gender: 'all',
     minPrice: 0,
     maxPrice: 500,
     sortBy: 'newest',
@@ -75,6 +77,7 @@ export default function ProductFilters({
       brand: 'all',
       material: 'all',
       shape: 'all',
+      gender: 'all',
       minPrice: 0,
       maxPrice: 500,
       sortBy: 'newest',
@@ -222,6 +225,23 @@ export default function ProductFilters({
                   {brand.name}
                 </option>
               ))}
+            </select>
+          </div>
+
+          {/* Gender */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Género
+            </label>
+            <select
+              value={filters.gender}
+              onChange={(e) => handleFilterChange('gender', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">Todos</option>
+              <option value="Female">Mujer</option>
+              <option value="Male">Hombre</option>
+              <option value="Unisex">Unisex</option>
             </select>
           </div>
 

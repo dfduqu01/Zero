@@ -13,6 +13,7 @@ interface Product {
   price: number;
   stock_quantity: number;
   low_stock_threshold: number;
+  gender: 'Male' | 'Female' | 'Unisex' | null;
   brand: { id: string; name: string; slug: string } | null;
   category: { id: string; name: string; slug: string } | null;
   frame_material: { id: string; name: string } | null;
@@ -43,6 +44,7 @@ export default function ProductsClient({ products, filterOptions }: ProductsClie
     brand: 'all',
     material: 'all',
     shape: 'all',
+    gender: 'all',
     minPrice: 0,
     maxPrice: 500,
     sortBy: 'newest',
@@ -72,6 +74,10 @@ export default function ProductsClient({ products, filterOptions }: ProductsClie
 
     if (filters.shape !== 'all') {
       filtered = filtered.filter((p) => p.frame_shape?.id === filters.shape);
+    }
+
+    if (filters.gender !== 'all') {
+      filtered = filtered.filter((p) => p.gender === filters.gender);
     }
 
     // Price filter

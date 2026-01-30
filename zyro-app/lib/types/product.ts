@@ -58,6 +58,7 @@ export interface Product {
   lens_width: number | null;
   bridge_width: number | null;
   temple_length: number | null;
+  gender: 'Male' | 'Female' | 'Unisex' | null;
   stock_quantity: number;
   low_stock_threshold: number;
   is_active: boolean;
