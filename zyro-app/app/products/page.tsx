@@ -1,12 +1,26 @@
+import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import ProductsClient from './ProductsClient';
 import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
 
-export const metadata = {
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
+export const metadata: Metadata = {
   title: 'Productos | Zyro Online',
-  description: 'Explora nuestra colección de gafas premium',
+  description: 'Explora nuestra colección de gafas premium. Gafas de sol y lentes con receta de marcas reconocidas, directo a tu puerta.',
+  alternates: {
+    canonical: `${siteUrl}/products`,
+  },
+  openGraph: {
+    title: 'Productos | Zyro Online',
+    description: 'Explora nuestra colección de gafas premium. Gafas de sol y lentes con receta de marcas reconocidas.',
+    url: `${siteUrl}/products`,
+    siteName: 'Zyro Online',
+    locale: 'es_LA',
+    type: 'website',
+  },
 };
 
 export default async function ProductsPage() {

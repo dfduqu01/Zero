@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { HeroCarousel } from '@/components/HeroCarousel';
 
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
 export default async function Home() {
   const supabase = await createClient();
 
@@ -50,6 +52,43 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-white">
+      {/* JSON-LD Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Organization',
+            name: 'Zyro Online',
+            url: siteUrl,
+            logo: `${siteUrl}/images/hero/hero-2.jpg`,
+            description: 'Cero intermediarios, cero límites. Gafas de sol y lentes con receta de calidad premium.',
+            contactPoint: {
+              '@type': 'ContactPoint',
+              telephone: '+507-6480-2601',
+              contactType: 'customer service',
+              availableLanguage: 'Spanish',
+            },
+          }),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'WebSite',
+            name: 'Zyro Online',
+            url: siteUrl,
+            potentialAction: {
+              '@type': 'SearchAction',
+              target: `${siteUrl}/products?q={search_term_string}`,
+              'query-input': 'required name=search_term_string',
+            },
+          }),
+        }}
+      />
+
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between">
