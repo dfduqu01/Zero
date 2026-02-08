@@ -30,8 +30,11 @@ export async function SiteHeader() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
-            <Link href="/products" className="text-sm font-medium hover:text-gray-600">
-              Productos
+            <Link href="/products?categoria=sol" className="text-sm font-medium hover:text-gray-600">
+              Gafas de Sol
+            </Link>
+            <Link href="/products?categoria=aros-opticos" className="text-sm font-medium hover:text-gray-600">
+              Lentes con Receta
             </Link>
             <Link href="/about" className="text-sm font-medium hover:text-gray-600">
               Nosotros

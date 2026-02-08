@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 interface Brand {
   id: string;
@@ -51,8 +52,17 @@ export default function ProductFilters({
   shapes,
   onFilterChange,
 }: ProductFiltersProps) {
+  const searchParams = useSearchParams();
+
+  // Find initial category from URL param (by slug)
+  const getCategoryIdFromSlug = (slug: string | null): string => {
+    if (!slug) return 'all';
+    const category = categories.find(c => c.slug === slug);
+    return category?.id || 'all';
+  };
+
   const [filters, setFilters] = useState<FilterState>({
-    category: 'all',
+    category: getCategoryIdFromSlug(searchParams.get('categoria')),
     brand: 'all',
     material: 'all',
     shape: 'all',
@@ -64,6 +74,20 @@ export default function ProductFilters({
   });
 
   const [showFilters, setShowFilters] = useState(false);
+
+  // Apply initial filter on mount if URL has categoria param
+  useEffect(() => {
+    const categoriaSlug = searchParams.get('categoria');
+    if (categoriaSlug) {
+      const categoryId = getCategoryIdFromSlug(categoriaSlug);
+      if (categoryId !== 'all') {
+        const newFilters = { ...filters, category: categoryId };
+        setFilters(newFilters);
+        onFilterChange(newFilters);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleFilterChange = (key: keyof FilterState, value: string | number) => {
     const newFilters = { ...filters, [key]: value };

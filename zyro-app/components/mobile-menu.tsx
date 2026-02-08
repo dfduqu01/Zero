@@ -26,11 +26,18 @@ export function MobileMenu({ isAdmin }: MobileMenuProps) {
         <div className="fixed inset-0 top-[65px] bg-white z-40 md:hidden">
           <nav className="flex flex-col p-4 space-y-4">
             <Link
-              href="/products"
+              href="/products?categoria=sol"
               className="text-lg font-medium py-2 border-b hover:text-gray-600"
               onClick={() => setIsOpen(false)}
             >
-              Productos
+              Gafas de Sol
+            </Link>
+            <Link
+              href="/products?categoria=aros-opticos"
+              className="text-lg font-medium py-2 border-b hover:text-gray-600"
+              onClick={() => setIsOpen(false)}
+            >
+              Lentes con Receta
             </Link>
             <Link
               href="/about"

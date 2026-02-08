@@ -4,15 +4,17 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import {
-  CheckCircle2,
-  Shield,
-  MessageCircle,
-  Eye,
-  Clock,
-  ArrowRight
-} from 'lucide-react';
 import { HeroCarousel } from '@/components/HeroCarousel';
+import {
+  Zap,
+  Shield,
+  Star,
+  ArrowRight,
+  Eye,
+  CheckCircle2,
+  MessageCircle,
+  Clock
+} from 'lucide-react';
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
@@ -33,13 +35,12 @@ export default async function Home() {
     isAdmin = userData?.is_admin || false;
   }
 
-  // Fetch featured products (only those with images, from active brands)
+  // Fetch featured products
   const { data: allProducts } = await supabase
     .from('products')
     .select(`
-      *,
+      id, name, price, stock_quantity,
       brand:brands!inner(name, is_active),
-      category:categories(name),
       product_images(image_url, is_primary)
     `)
     .eq('is_active', true)
@@ -47,8 +48,7 @@ export default async function Home() {
     .order('created_at', { ascending: false })
     .limit(20);
 
-  // Filter to only show products with images and take first 4
-  const products = allProducts?.filter(p => p.product_images && p.product_images.length > 0).slice(0, 4);
+  const products = allProducts?.filter(p => p.product_images?.length > 0).slice(0, 6) || [];
 
   return (
     <div className="min-h-screen bg-white">
@@ -96,8 +96,11 @@ export default async function Home() {
             <span className="text-2xl font-bold">Zyro</span>
           </Link>
           <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
-            <Link href="/products" className="transition-colors hover:text-foreground/80">
-              Productos
+            <Link href="/products?categoria=sol" className="transition-colors hover:text-foreground/80">
+              Gafas de Sol
+            </Link>
+            <Link href="/products?categoria=aros-opticos" className="transition-colors hover:text-foreground/80">
+              Lentes con Receta
             </Link>
             <Link href="#nuestra-historia" className="transition-colors hover:text-foreground/80">
               Nosotros
@@ -138,8 +141,15 @@ export default async function Home() {
       <section className="container mx-auto py-16 md:py-24 lg:py-32 overflow-hidden">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           <div className="space-y-8">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted border border-border">
+              <Zap className="w-4 h-4 text-foreground" />
+              <span className="text-sm font-medium">25+ años de experiencia en óptica</span>
+            </div>
+
+            {/* Headline */}
             <div className="space-y-4">
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-extrabold tracking-tight leading-tight">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-extrabold tracking-tight leading-[1.1]">
                 CERO<br />
                 INTERMEDIARIOS<br />
                 CERO LÍMITES
@@ -148,14 +158,30 @@ export default async function Home() {
                 Tu vista merece más que lo mismo de siempre. 25 años conectando calidad directamente contigo.
               </p>
             </div>
+
+            {/* CTAs */}
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" asChild className="text-base">
-                <Link href="/products">Explorar Colección</Link>
+              <Button
+                size="lg"
+                asChild
+                className="text-base px-8 py-6 rounded-full font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
+              >
+                <Link href="/products">
+                  Explorar Colección
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Link>
               </Button>
-              <Button size="lg" variant="outline" asChild className="text-base">
+              <Button
+                size="lg"
+                variant="outline"
+                asChild
+                className="text-base px-8 py-6 rounded-full font-bold border-2 hover:bg-muted transition-all duration-300"
+              >
                 <Link href="#how-it-works">Cómo Funciona</Link>
               </Button>
             </div>
+
+            {/* Trust Badges */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 pt-4">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-5 w-5 text-foreground flex-shrink-0" />
@@ -171,104 +197,82 @@ export default async function Home() {
               </div>
             </div>
           </div>
-          <div className="relative h-[280px] sm:h-[350px] md:h-[400px] lg:h-[500px] xl:h-[550px] rounded-lg overflow-hidden bg-muted">
+
+          {/* Hero Image Carousel */}
+          <div className="relative h-[280px] sm:h-[350px] md:h-[400px] lg:h-[500px] xl:h-[550px] rounded-2xl overflow-hidden bg-muted shadow-2xl">
             <HeroCarousel />
           </div>
         </div>
       </section>
 
-      {/* Trust Section */}
-      <section className="border-t bg-muted/30 py-24">
-        <div className="container mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Por Qué Elegir Zyro
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Experiencia, calidad y servicio sin intermediarios
-            </p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            <Card className="border-2">
-              <CardContent className="pt-8 pb-6 text-center space-y-4">
-                <div className="mx-auto w-12 h-12 rounded-full bg-foreground flex items-center justify-center">
-                  <Clock className="h-6 w-6 text-background" />
-                </div>
-                <h3 className="text-xl font-semibold">25+ Años</h3>
-                <p className="text-sm text-muted-foreground">
-                  Conectando calidad directamente desde 1998
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="border-2">
-              <CardContent className="pt-8 pb-6 text-center space-y-4">
-                <div className="mx-auto w-12 h-12 rounded-full bg-foreground flex items-center justify-center">
-                  <Shield className="h-6 w-6 text-background" />
-                </div>
-                <h3 className="text-xl font-semibold">Calidad Garantizada</h3>
-                <p className="text-sm text-muted-foreground">
-                  Trabajamos solo con proveedores certificados
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="border-2">
-              <CardContent className="pt-8 pb-6 text-center space-y-4">
-                <div className="mx-auto w-12 h-12 rounded-full bg-foreground flex items-center justify-center">
-                  <MessageCircle className="h-6 w-6 text-background" />
-                </div>
-                <h3 className="text-xl font-semibold">Soporte Experto</h3>
-                <p className="text-sm text-muted-foreground">
-                  Asesoría personalizada por WhatsApp
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
       {/* Featured Products */}
-      <section className="py-24">
+      <section className="py-24 bg-muted/30">
         <div className="container mx-auto">
+          {/* Section Header */}
           <div className="text-center mb-16">
+            <span className="inline-block px-4 py-1.5 rounded-full bg-foreground text-background text-sm font-semibold mb-4">
+              COLECCIÓN DESTACADA
+            </span>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Productos Destacados
             </h2>
-            <p className="text-lg text-muted-foreground">
-              Descubre nuestra selección curada
+            <p className="text-muted-foreground text-lg max-w-xl mx-auto">
+              Descubre nuestra selección curada de gafas premium
             </p>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            {products?.map((product) => {
-              const primaryImage = product.product_images?.find((img: { is_primary?: boolean; image_url?: string }) => img.is_primary)?.image_url
+
+          {/* Products Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            {products.map((product) => {
+              const primaryImage = product.product_images?.find((img: { is_primary?: boolean }) => img.is_primary)?.image_url
                 || product.product_images?.[0]?.image_url;
 
               return (
-                <Link key={product.id} href={`/products/${product.id}`}>
-                  <Card className="group hover:shadow-lg transition-all duration-300 overflow-hidden">
-                    <div className="aspect-square relative bg-muted overflow-hidden">
+                <Link
+                  key={product.id}
+                  href={`/products/${product.id}`}
+                  className="group"
+                >
+                  <Card className="overflow-hidden border-2 hover:border-foreground/20 hover:shadow-xl transition-all duration-500 hover:scale-[1.02]">
+                    {/* Image */}
+                    <div className="relative aspect-square overflow-hidden bg-muted">
                       {primaryImage ? (
                         <Image
                           src={primaryImage}
                           alt={product.name}
                           fill
-                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                          className="object-cover group-hover:scale-110 transition-transform duration-700"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Eye className="h-16 w-16 text-muted-foreground/20" />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Eye className="w-16 h-16 text-muted-foreground/20" />
                         </div>
                       )}
+
+                      {/* Overlay on hover */}
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+
+                      {/* Quick view button */}
+                      <div className="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
+                        <div className="bg-white text-foreground text-sm font-semibold py-2.5 px-4 rounded-full text-center shadow-lg">
+                          Ver Detalles
+                        </div>
+                      </div>
+
+                      {/* Low stock badge */}
                       {product.stock_quantity <= 10 && product.stock_quantity > 0 && (
-                        <Badge className="absolute top-2 right-2 bg-black text-white">
+                        <Badge className="absolute top-3 right-3 bg-black text-white">
                           Pocas Unidades
                         </Badge>
                       )}
                     </div>
+
+                    {/* Info */}
                     <CardContent className="p-4">
                       <p className="text-sm text-muted-foreground mb-1">
                         {product.brand?.name || 'Zyro'}
                       </p>
-                      <h3 className="font-semibold mb-2 line-clamp-1">
+                      <h3 className="font-semibold mb-2 line-clamp-1 group-hover:text-foreground/80 transition-colors">
                         {product.name}
                       </h3>
                       <p className="text-2xl font-bold">
@@ -280,10 +284,74 @@ export default async function Home() {
               );
             })}
           </div>
+
+          {/* View All Button */}
           <div className="text-center">
-            <Button size="lg" variant="outline" asChild>
-              <Link href="/products">Ver Toda la Colección →</Link>
+            <Button
+              size="lg"
+              asChild
+              className="px-8 py-6 rounded-full font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
+            >
+              <Link href="/products" className="flex items-center gap-2">
+                Ver Toda la Colección
+                <ArrowRight className="w-5 h-5" />
+              </Link>
             </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Trust/Features Section */}
+      <section className="py-24">
+        <div className="container mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Por Qué Elegir Zyro
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Experiencia, calidad y servicio sin intermediarios
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* 25+ Años */}
+            <Card className="border-2 hover:border-foreground/20 hover:shadow-xl transition-all duration-500 hover:scale-[1.02]">
+              <CardContent className="pt-8 pb-6 text-center space-y-4">
+                <div className="mx-auto w-14 h-14 rounded-full bg-foreground flex items-center justify-center">
+                  <Clock className="h-7 w-7 text-background" />
+                </div>
+                <h3 className="text-xl font-semibold">25+ Años</h3>
+                <p className="text-sm text-muted-foreground">
+                  Conectando calidad directamente desde 1998
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Calidad Garantizada */}
+            <Card className="border-2 hover:border-foreground/20 hover:shadow-xl transition-all duration-500 hover:scale-[1.02]">
+              <CardContent className="pt-8 pb-6 text-center space-y-4">
+                <div className="mx-auto w-14 h-14 rounded-full bg-foreground flex items-center justify-center">
+                  <Shield className="h-7 w-7 text-background" />
+                </div>
+                <h3 className="text-xl font-semibold">Calidad Garantizada</h3>
+                <p className="text-sm text-muted-foreground">
+                  Trabajamos solo con proveedores certificados
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Soporte Experto */}
+            <Card className="border-2 hover:border-foreground/20 hover:shadow-xl transition-all duration-500 hover:scale-[1.02]">
+              <CardContent className="pt-8 pb-6 text-center space-y-4">
+                <div className="mx-auto w-14 h-14 rounded-full bg-foreground flex items-center justify-center">
+                  <MessageCircle className="h-7 w-7 text-background" />
+                </div>
+                <h3 className="text-xl font-semibold">Soporte Experto</h3>
+                <p className="text-sm text-muted-foreground">
+                  Asesoría personalizada por WhatsApp
+                </p>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
@@ -292,6 +360,9 @@ export default async function Home() {
       <section id="how-it-works" className="border-t bg-muted/30 py-24">
         <div className="container mx-auto max-w-5xl">
           <div className="text-center mb-16">
+            <span className="inline-block px-4 py-1.5 rounded-full bg-foreground text-background text-sm font-semibold mb-4">
+              PROCESO SIMPLE
+            </span>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Cómo Funciona
             </h2>
@@ -299,11 +370,15 @@ export default async function Home() {
               Lentes con receta en 3 simples pasos
             </p>
           </div>
+
           <div className="grid md:grid-cols-3 gap-8 relative">
+            {/* Connection line */}
+            <div className="hidden md:block absolute top-8 left-[16.67%] right-[16.67%] h-0.5 bg-border" />
+
             {/* Step 1 */}
             <div className="text-center space-y-4">
               <div className="relative">
-                <div className="mx-auto w-16 h-16 rounded-full bg-foreground text-background flex items-center justify-center text-2xl font-bold">
+                <div className="mx-auto w-16 h-16 rounded-full bg-foreground text-background flex items-center justify-center text-2xl font-bold relative z-10">
                   1
                 </div>
               </div>
@@ -316,7 +391,7 @@ export default async function Home() {
             {/* Step 2 */}
             <div className="text-center space-y-4">
               <div className="relative">
-                <div className="mx-auto w-16 h-16 rounded-full bg-foreground text-background flex items-center justify-center text-2xl font-bold">
+                <div className="mx-auto w-16 h-16 rounded-full bg-foreground text-background flex items-center justify-center text-2xl font-bold relative z-10">
                   2
                 </div>
               </div>
@@ -329,7 +404,7 @@ export default async function Home() {
             {/* Step 3 */}
             <div className="text-center space-y-4">
               <div className="relative">
-                <div className="mx-auto w-16 h-16 rounded-full bg-foreground text-background flex items-center justify-center text-2xl font-bold">
+                <div className="mx-auto w-16 h-16 rounded-full bg-foreground text-background flex items-center justify-center text-2xl font-bold relative z-10">
                   3
                 </div>
               </div>
@@ -339,35 +414,63 @@ export default async function Home() {
               </p>
             </div>
           </div>
+
           <div className="text-center mt-12">
-            <Button size="lg" asChild>
+            <Button
+              size="lg"
+              asChild
+              className="px-8 py-6 rounded-full font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
+            >
               <Link href="/products">Comenzar Ahora</Link>
             </Button>
           </div>
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="py-24 bg-foreground text-background">
-        <div className="container mx-auto max-w-4xl text-center space-y-8">
-          <h2 className="text-4xl md:text-5xl font-bold">
-            ¿Listo Para Ver La Diferencia?
-          </h2>
-          <p className="text-xl text-background/80 max-w-2xl mx-auto">
-            Únete a miles de clientes satisfechos en toda Latinoamérica
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="secondary" asChild>
-              <Link href="/products">Explorar Colección</Link>
-            </Button>
-            <Button size="lg" variant="outline" className="bg-transparent border-background text-background hover:bg-background hover:text-foreground" asChild>
-              <a href="https://wa.me/50764802601" target="_blank" rel="noopener noreferrer">Contactar Soporte</a>
-            </Button>
+      {/* Testimonials */}
+      <section className="py-24">
+        <div className="container mx-auto">
+          <div className="text-center mb-16">
+            <span className="inline-block px-4 py-1.5 rounded-full bg-foreground text-background text-sm font-semibold mb-4">
+              TESTIMONIOS
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold">
+              Lo Que Dicen Nuestros Clientes
+            </h2>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              { name: 'María G.', location: 'Ciudad de Panamá', text: 'Increíble calidad y el precio es imbatible. Mis nuevos lentes llegaron perfectos.', stars: 5 },
+              { name: 'Carlos R.', location: 'Panamá Oeste', text: 'El proceso fue super fácil. Subí mi receta y en 8 días tenía mis gafas.', stars: 5 },
+              { name: 'Ana M.', location: 'Colón', text: 'Excelente atención por WhatsApp. Me ayudaron a elegir el modelo perfecto.', stars: 5 }
+            ].map((testimonial, index) => (
+              <Card
+                key={index}
+                className="border-2 hover:border-foreground/20 hover:shadow-xl transition-all duration-500"
+              >
+                <CardContent className="p-8">
+                  {/* Stars */}
+                  <div className="flex gap-1 mb-4">
+                    {Array.from({ length: testimonial.stars }).map((_, i) => (
+                      <Star key={i} className="w-5 h-5" style={{ fill: '#f59e0b', color: '#f59e0b' }} />
+                    ))}
+                  </div>
+
+                  <p className="text-muted-foreground mb-6 leading-relaxed">"{testimonial.text}"</p>
+
+                  <div>
+                    <p className="font-semibold">{testimonial.name}</p>
+                    <p className="text-muted-foreground text-sm">{testimonial.location}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Nuestra Historia Section */}
+      {/* Nuestra Historia */}
       <section id="nuestra-historia" className="py-24 bg-muted/30">
         <div className="container mx-auto max-w-4xl">
           <div className="text-center space-y-8">
@@ -388,11 +491,47 @@ export default async function Home() {
                 Una forma diferente de ver el mundo: más clara, más simple, más personal.
               </p>
             </div>
-            <Button size="lg" variant="outline" asChild>
+            <Button size="lg" variant="outline" asChild className="rounded-full font-bold border-2">
               <Link href="/about" className="inline-flex items-center gap-2">
                 Conoce Más
                 <ArrowRight className="h-4 w-4" />
               </Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="py-24 bg-foreground text-background">
+        <div className="container mx-auto max-w-4xl text-center space-y-8">
+          <h2 className="text-4xl md:text-5xl font-bold">
+            ¿Listo Para Ver La Diferencia?
+          </h2>
+          <p className="text-xl text-background/80 max-w-2xl mx-auto">
+            Únete a miles de clientes satisfechos en toda Latinoamérica
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button
+              size="lg"
+              variant="secondary"
+              asChild
+              className="px-8 py-6 rounded-full font-bold hover:scale-105 transition-all duration-300"
+            >
+              <Link href="/products">
+                Explorar Colección
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Link>
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="bg-transparent border-2 border-background text-background hover:bg-background hover:text-foreground px-8 py-6 rounded-full font-bold transition-all duration-300"
+              asChild
+            >
+              <a href="https://wa.me/50764802601" target="_blank" rel="noopener noreferrer">
+                <MessageCircle className="w-5 h-5 mr-2" />
+                Contactar Soporte
+              </a>
             </Button>
           </div>
         </div>
