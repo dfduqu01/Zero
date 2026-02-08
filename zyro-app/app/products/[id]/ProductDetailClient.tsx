@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { ImageMagnifier } from '@/components/ImageMagnifier';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import PrescriptionForm from '@/components/PrescriptionForm';
@@ -256,17 +257,16 @@ export default function ProductDetailClient({
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
       {/* Left Column - Images */}
       <div className="space-y-4">
-        {/* Main Image */}
-        <div className="relative bg-gray-100 rounded-lg overflow-hidden min-h-[400px] max-h-[600px] flex items-center justify-center">
+        {/* Main Image with Magnifier */}
+        <div className="relative bg-gray-100 rounded-lg overflow-hidden min-h-[400px] max-h-[600px] flex items-center justify-center group">
           {selectedImage ? (
-            <Image
+            <ImageMagnifier
               src={selectedImage.cloudfront_url || selectedImage.image_url}
               alt={product.name}
               width={600}
               height={600}
-              className="object-contain w-full h-auto max-h-[600px]"
-              priority
-              sizes="(max-width: 1024px) 100vw, 50vw"
+              magnifierSize={200}
+              zoomLevel={2.5}
             />
           ) : (
             <div className="flex items-center justify-center text-gray-400">
@@ -283,12 +283,12 @@ export default function ProductDetailClient({
 
           {/* Stock Badge */}
           {isLowStock && (
-            <div className="absolute top-4 right-4 bg-orange-500 text-white text-sm font-medium px-3 py-1 rounded-full">
+            <div className="absolute top-4 right-4 bg-orange-500 text-white text-sm font-medium px-3 py-1 rounded-full z-10">
               Pocas Unidades
             </div>
           )}
           {isOutOfStock && (
-            <div className="absolute top-4 right-4 bg-red-500 text-white text-sm font-medium px-3 py-1 rounded-full">
+            <div className="absolute top-4 right-4 bg-red-500 text-white text-sm font-medium px-3 py-1 rounded-full z-10">
               Agotado
             </div>
           )}
