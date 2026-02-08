@@ -270,7 +270,7 @@ export default async function Home() {
                     {/* Info */}
                     <CardContent className="p-4">
                       <p className="text-sm text-muted-foreground mb-1">
-                        {product.brand?.name || 'Zyro'}
+                        {product.brand?.[0]?.name || 'Zyro'}
                       </p>
                       <h3 className="font-semibold mb-2 line-clamp-1 group-hover:text-foreground/80 transition-colors">
                         {product.name}
