@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import ProductDetailClient from './ProductDetailClient';
+import ProductsBreadcrumbLink from './ProductsBreadcrumbLink';
 import { SiteHeader } from '@/components/site-header';
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
@@ -165,9 +166,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             Inicio
           </Link>
           <span>/</span>
-          <Link href="/products" className="hover:text-gray-900">
-            Productos
-          </Link>
+          <ProductsBreadcrumbLink />
           <span>/</span>
           <span className="text-gray-900">{product.name}</span>
         </div>

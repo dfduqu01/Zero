@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import ProductsClient from './ProductsClient';
@@ -133,15 +134,17 @@ export default async function ProductsPage() {
             </Link>
           </div>
         ) : (
-          <ProductsClient
-            products={products}
-            filterOptions={{
-              brands: brands || [],
-              categories: categories || [],
-              materials: materials || [],
-              shapes: shapes || [],
-            }}
-          />
+          <Suspense fallback={<div className="text-center py-12"><p className="text-gray-500">Cargando productos...</p></div>}>
+            <ProductsClient
+              products={products}
+              filterOptions={{
+                brands: brands || [],
+                categories: categories || [],
+                materials: materials || [],
+                shapes: shapes || [],
+              }}
+            />
+          </Suspense>
         )}
       </main>
 

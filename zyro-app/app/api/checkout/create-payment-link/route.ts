@@ -163,16 +163,24 @@ export async function POST(request: NextRequest) {
         { status: 200 }
       );
     } else {
-      // Link creation failed
+      // Link creation failed - log full response for debugging
       console.error('[create-payment-link] Link creation failed:', {
         message: linkResponse.message,
-        status: linkResponse.headerStatus,
+        headerStatus: linkResponse.headerStatus,
+        fullResponse: JSON.stringify(linkResponse),
       });
+
+      // Build detailed error message for debugging
+      const errorDetails = linkResponse.headerStatus?.description
+        || linkResponse.message
+        || 'No se pudo crear el enlace de pago';
+
+      console.error('[create-payment-link] Error details:', errorDetails);
 
       return NextResponse.json(
         {
           success: false,
-          error: linkResponse.message || 'No se pudo crear el enlace de pago',
+          error: `Error de pago: ${errorDetails}`,
         } as CreatePaymentResponse,
         { status: 400 }
       );

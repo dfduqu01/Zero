@@ -18,8 +18,8 @@ export function ImageMagnifier({
   alt,
   width,
   height,
-  magnifierSize = 150,
-  zoomLevel = 2.5,
+  magnifierSize = 120,
+  zoomLevel = 2.2,
   className = '',
 }: ImageMagnifierProps) {
   const [showMagnifier, setShowMagnifier] = useState(false);

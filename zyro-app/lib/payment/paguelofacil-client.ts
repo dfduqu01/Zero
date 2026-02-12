@@ -101,15 +101,30 @@ export class PagueloFacilClient {
 
         clearTimeout(timeoutId);
 
+        // Get raw response text first for debugging
+        const responseText = await response.text();
+        console.log('[PagueloFacil] Raw response:', responseText);
+
         // Parse JSON response
-        const data: CreatePaymentLinkResponse = await response.json();
+        let data: CreatePaymentLinkResponse;
+        try {
+          data = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error('[PagueloFacil] Failed to parse JSON response:', responseText);
+          throw this.createPaymentError(
+            PaymentErrorType.GATEWAY_ERROR,
+            `Invalid JSON response from PagueloFacil: ${responseText.substring(0, 200)}`
+          );
+        }
+
+        console.log('[PagueloFacil] Parsed response:', JSON.stringify(data, null, 2));
 
         // Check if HTTP request was successful
         if (!response.ok) {
           console.error('[PagueloFacil] HTTP error:', response.status, data);
           throw this.createPaymentError(
             PaymentErrorType.GATEWAY_ERROR,
-            `HTTP ${response.status}: ${data.headerStatus?.description || 'Unknown error'}`,
+            `HTTP ${response.status}: ${data.headerStatus?.description || data.message || 'Unknown error'}`,
             String(data.headerStatus?.code)
           );
         }
@@ -121,9 +136,11 @@ export class PagueloFacilClient {
             url: data.data.url.substring(0, 50) + '...',
           });
         } else {
-          console.warn('[PagueloFacil] Payment link creation failed:', {
+          console.error('[PagueloFacil] Payment link creation failed:', {
+            success: data.success,
             message: data.message,
-            status: data.headerStatus?.description,
+            headerStatus: data.headerStatus,
+            fullData: JSON.stringify(data),
           });
         }
 

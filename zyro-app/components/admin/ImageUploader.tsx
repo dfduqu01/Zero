@@ -14,6 +14,7 @@ export interface UploadedImage {
 export interface ExistingImage {
   id: string;
   image_url: string;
+  cloudfront_url?: string | null;
   display_order: number;
   is_primary: boolean;
 }
@@ -159,7 +160,7 @@ export default function ImageUploader({
               <div key={image.id} className="relative group">
                 <div className="aspect-square rounded-lg overflow-hidden bg-gray-100 border-2 border-gray-200">
                   <Image
-                    src={image.image_url}
+                    src={image.cloudfront_url || image.image_url}
                     alt="Product image"
                     width={300}
                     height={300}

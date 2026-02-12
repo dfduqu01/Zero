@@ -142,6 +142,8 @@ export default function ProductForm({
 
       // Upload new images
       if (images.length > 0 && productId) {
+        let uploadErrors: string[] = [];
+
         for (let i = 0; i < images.length; i++) {
           const image = images[i];
           const fileName = generateUniqueFileName(image.file.name, productId);
@@ -153,6 +155,7 @@ export default function ProductForm({
 
           if (uploadError) {
             console.error('Error uploading image:', uploadError);
+            uploadErrors.push(`Imagen ${i + 1}: ${uploadError.message}`);
             continue;
           }
 
@@ -162,7 +165,7 @@ export default function ProductForm({
             .getPublicUrl(fileName);
 
           // Insert image record
-          await supabase.from('product_images').insert([
+          const { error: insertError } = await supabase.from('product_images').insert([
             {
               product_id: productId,
               image_url: urlData.publicUrl,
@@ -170,6 +173,15 @@ export default function ProductForm({
               is_primary: existingImages.length === 0 && i === 0,
             },
           ]);
+
+          if (insertError) {
+            console.error('Error saving image record:', insertError);
+            uploadErrors.push(`Imagen ${i + 1}: Error al guardar registro - ${insertError.message}`);
+          }
+        }
+
+        if (uploadErrors.length > 0) {
+          alert(`Producto guardado, pero hubo errores con algunas imágenes:\n\n${uploadErrors.join('\n')}`);
         }
       }
 
@@ -180,10 +192,12 @@ export default function ProductForm({
         );
 
         for (const image of removedImages) {
-          // Delete from storage
-          const url = new URL(image.image_url);
-          const filePath = url.pathname.split('/').slice(-2).join('/');
-          await supabase.storage.from('product-images').remove([filePath]);
+          // Only delete from Supabase storage if it's a Supabase storage URL
+          if (image.image_url.includes('supabase.co/storage')) {
+            const url = new URL(image.image_url);
+            const filePath = url.pathname.split('/').slice(-2).join('/');
+            await supabase.storage.from('product-images').remove([filePath]);
+          }
 
           // Delete from database
           await supabase.from('product_images').delete().eq('id', image.id);

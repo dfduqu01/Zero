@@ -1,6 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Info } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import type {
   PrescriptionData,
   PrescriptionType,
@@ -16,6 +24,42 @@ import {
   compressPrescriptionImage,
 } from '@/lib/utils/prescription-helpers';
 
+const FIELD_HELP: Record<string, { full: string; tip: string }> = {
+  ESF: {
+    full: 'Esfera',
+    tip: 'Corrección principal. Negativos = miopía, positivos = hipermetropía.',
+  },
+  CIL: {
+    full: 'Cilindro',
+    tip: 'Corrección del astigmatismo. Si no tienes, déjalo vacío.',
+  },
+  EJE: {
+    full: 'Eje',
+    tip: 'Ángulo del astigmatismo (0-180°). Va junto con cilindro.',
+  },
+  ADIC: {
+    full: 'Adición',
+    tip: 'Solo para lentes progresivos. Corrección de cerca.',
+  },
+  PD: {
+    full: 'Distancia Pupilar',
+    tip: 'Distancia entre pupilas en mm. Usualmente entre 54-74 mm.',
+  },
+};
+
+function FieldLabel({ abbr }: { abbr: string }) {
+  const help = FIELD_HELP[abbr];
+  if (!help) return <label className="text-xs text-gray-500">{abbr}</label>;
+  return (
+    <label className="text-xs text-gray-500 flex items-center gap-1">
+      {abbr}
+      <span title={`${help.full}: ${help.tip}`} className="cursor-help">
+        <Info className="w-3 h-3 text-gray-400" />
+      </span>
+    </label>
+  );
+}
+
 interface PrescriptionFormProps {
   value: PrescriptionData | undefined;
   onChange: (prescription: PrescriptionData | undefined) => void;
@@ -28,6 +72,15 @@ interface PrescriptionFormProps {
 }
 
 type FlowStep = 'initial' | 'prescription_type' | 'formula' | 'lens_type' | 'lens_index' | 'view_area';
+
+const parseNum = (value: string, useInt = false): number | undefined => {
+  const parsed = useInt ? parseInt(value) : parseFloat(value);
+  return isNaN(parsed) ? undefined : parsed;
+};
+
+const displayNum = (value: number | undefined): number | string => {
+  return value != null ? value : '';
+};
 
 export default function PrescriptionForm({
   value,
@@ -307,59 +360,98 @@ export default function PrescriptionForm({
           </p>
         </div>
 
+        {/* Help Dialog Link */}
+        <Dialog>
+          <DialogTrigger asChild>
+            <button type="button" className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1">
+              <Info className="w-4 h-4" />
+              ¿Necesitas ayuda con tu receta?
+            </button>
+          </DialogTrigger>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Guía de Prescripción</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 text-sm">
+              {Object.entries(FIELD_HELP).map(([abbr, help]) => (
+                <div key={abbr} className="flex gap-3">
+                  <span className="font-bold text-gray-900 w-10 flex-shrink-0">{abbr}</span>
+                  <div>
+                    <span className="font-medium text-gray-800">{help.full}</span>
+                    <p className="text-gray-600 mt-0.5">{help.tip}</p>
+                  </div>
+                </div>
+              ))}
+              <div className="border-t pt-4">
+                <p className="text-gray-600 mb-2">
+                  Estos valores se encuentran en la receta que te entrega tu oftalmólogo.
+                </p>
+                <a
+                  href="https://wa.me/50764802601?text=Hola%2C%20necesito%20ayuda%20con%20mi%20receta"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-green-600 hover:text-green-700 font-medium"
+                >
+                  Envía una foto de tu receta y te ayudamos
+                </a>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {/* Formula Fields */}
         <div className="space-y-4 bg-white rounded-lg p-4">
           <div className="space-y-2">
             <p className="text-xs font-medium text-gray-700">Ojo Derecho (OD)</p>
             <div className="grid grid-cols-4 gap-2">
               <div>
-                <label className="text-xs text-gray-500">ESF</label>
+                <FieldLabel abbr="ESF" />
                 <input
                   type="number"
                   step="0.25"
                   placeholder="-0.50"
-                  value={formula.od_sph || ''}
+                  value={displayNum(formula.od_sph)}
                   onChange={(e) =>
-                    setFormula({ ...formula, od_sph: parseFloat(e.target.value) || undefined })
+                    setFormula({ ...formula, od_sph: parseNum(e.target.value) })
                   }
                   className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
                 />
               </div>
               <div>
-                <label className="text-xs text-gray-500">CIL</label>
+                <FieldLabel abbr="CIL" />
                 <input
                   type="number"
                   step="0.25"
                   placeholder="-0.50"
-                  value={formula.od_cyl || ''}
+                  value={displayNum(formula.od_cyl)}
                   onChange={(e) =>
-                    setFormula({ ...formula, od_cyl: parseFloat(e.target.value) || undefined })
+                    setFormula({ ...formula, od_cyl: parseNum(e.target.value) })
                   }
                   className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
                 />
               </div>
               <div>
-                <label className="text-xs text-gray-500">EJE</label>
+                <FieldLabel abbr="EJE" />
                 <input
                   type="number"
                   placeholder="22"
-                  value={formula.od_axis || ''}
+                  value={displayNum(formula.od_axis)}
                   onChange={(e) =>
-                    setFormula({ ...formula, od_axis: parseInt(e.target.value) || undefined })
+                    setFormula({ ...formula, od_axis: parseNum(e.target.value, true) })
                   }
                   className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
                 />
               </div>
               {selectedPrescriptionType?.slug === 'progressive' && (
                 <div>
-                  <label className="text-xs text-gray-500">ADIC</label>
+                  <FieldLabel abbr="ADIC" />
                   <input
                     type="number"
                     step="0.25"
                     placeholder="+1.50"
-                    value={formula.add_value || ''}
+                    value={displayNum(formula.add_value)}
                     onChange={(e) =>
-                      setFormula({ ...formula, add_value: parseFloat(e.target.value) || undefined })
+                      setFormula({ ...formula, add_value: parseNum(e.target.value) })
                     }
                     className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
                   />
@@ -372,53 +464,53 @@ export default function PrescriptionForm({
             <p className="text-xs font-medium text-gray-700">Ojo Izquierdo (OI)</p>
             <div className="grid grid-cols-4 gap-2">
               <div>
-                <label className="text-xs text-gray-500">ESF</label>
+                <FieldLabel abbr="ESF" />
                 <input
                   type="number"
                   step="0.25"
                   placeholder="-0.50"
-                  value={formula.os_sph || ''}
+                  value={displayNum(formula.os_sph)}
                   onChange={(e) =>
-                    setFormula({ ...formula, os_sph: parseFloat(e.target.value) || undefined })
+                    setFormula({ ...formula, os_sph: parseNum(e.target.value) })
                   }
                   className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
                 />
               </div>
               <div>
-                <label className="text-xs text-gray-500">CIL</label>
+                <FieldLabel abbr="CIL" />
                 <input
                   type="number"
                   step="0.25"
                   placeholder="-0.50"
-                  value={formula.os_cyl || ''}
+                  value={displayNum(formula.os_cyl)}
                   onChange={(e) =>
-                    setFormula({ ...formula, os_cyl: parseFloat(e.target.value) || undefined })
+                    setFormula({ ...formula, os_cyl: parseNum(e.target.value) })
                   }
                   className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
                 />
               </div>
               <div>
-                <label className="text-xs text-gray-500">EJE</label>
+                <FieldLabel abbr="EJE" />
                 <input
                   type="number"
                   placeholder="4"
-                  value={formula.os_axis || ''}
+                  value={displayNum(formula.os_axis)}
                   onChange={(e) =>
-                    setFormula({ ...formula, os_axis: parseInt(e.target.value) || undefined })
+                    setFormula({ ...formula, os_axis: parseNum(e.target.value, true) })
                   }
                   className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
                 />
               </div>
               {selectedPrescriptionType?.slug === 'progressive' && (
                 <div>
-                  <label className="text-xs text-gray-500">ADIC</label>
+                  <FieldLabel abbr="ADIC" />
                   <input
                     type="number"
                     step="0.25"
                     placeholder="+1.50"
-                    value={formula.add_value || ''}
+                    value={displayNum(formula.add_value)}
                     onChange={(e) =>
-                      setFormula({ ...formula, add_value: parseFloat(e.target.value) || undefined })
+                      setFormula({ ...formula, add_value: parseNum(e.target.value) })
                     }
                     className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
                   />
@@ -433,9 +525,9 @@ export default function PrescriptionForm({
               type="number"
               step="0.5"
               placeholder="55.50"
-              value={formula.pd || ''}
+              value={displayNum(formula.pd)}
               onChange={(e) =>
-                setFormula({ ...formula, pd: parseFloat(e.target.value) || undefined })
+                setFormula({ ...formula, pd: parseNum(e.target.value) })
               }
               className="w-24 px-2 py-1 text-sm border border-gray-300 rounded"
             />

@@ -513,12 +513,12 @@ export default function ProductDetailClient({
               </p>
             </div>
           )}
-          <Link
-            href="/products"
+          <button
+            onClick={() => router.back()}
             className="block w-full text-center py-4 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors"
           >
             Seguir Comprando
-          </Link>
+          </button>
         </div>
       </div>
     </div>

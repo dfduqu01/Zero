@@ -62,7 +62,7 @@ export default async function Home() {
             name: 'Zyro Online',
             url: siteUrl,
             logo: `${siteUrl}/images/hero/hero-2.jpg`,
-            description: 'Cero intermediarios, cero límites. Gafas de sol y lentes con receta de calidad premium.',
+            description: 'Gafas y lentes con receta directo a tu puerta. Óptica en línea para Panamá y Latinoamérica.',
             contactPoint: {
               '@type': 'ContactPoint',
               telephone: '+507-6480-2601',
@@ -144,19 +144,30 @@ export default async function Home() {
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted border border-border">
               <Zap className="w-4 h-4 text-foreground" />
-              <span className="text-sm font-medium">25+ años de experiencia en óptica</span>
+              <span className="text-sm font-medium">Óptica en línea - Latinoamérica</span>
             </div>
 
             {/* Headline */}
-            <div className="space-y-4">
+            <div className="space-y-6">
               <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-extrabold tracking-tight leading-[1.1]">
-                CERO<br />
-                INTERMEDIARIOS<br />
-                CERO LÍMITES
+                GAFAS Y LENTES<br />
+                CON RECETA<br />
+                DIRECTO A TU PUERTA
               </h1>
-              <p className="text-xl text-muted-foreground max-w-md">
-                Tu vista merece más que lo mismo de siempre. 25 años conectando calidad directamente contigo.
-              </p>
+              <div className="flex flex-col gap-3 max-w-md">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center text-sm font-bold flex-shrink-0">1</div>
+                  <span className="text-lg text-muted-foreground font-medium">Elige tu montura</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center text-sm font-bold flex-shrink-0">2</div>
+                  <span className="text-lg text-muted-foreground font-medium">Sube tu receta</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center text-sm font-bold flex-shrink-0">3</div>
+                  <span className="text-lg text-muted-foreground font-medium">Recibe en casa en 7-10 días</span>
+                </div>
+              </div>
             </div>
 
             {/* CTAs */}

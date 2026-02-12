@@ -165,4 +165,4 @@
                                                                                                                                                            
 ✻ Worked for 55s                                                                                                                                           
                                                                                                                                                            
-❯ here is the new token: sbp_fb546d43195d5a236cce3547b106470476bb28ef   
+❯ here is the new token: 

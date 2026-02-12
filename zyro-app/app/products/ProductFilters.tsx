@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useState } from 'react';
 
 interface Brand {
   id: string;
@@ -30,6 +29,7 @@ interface ProductFiltersProps {
   categories: Category[];
   materials: Material[];
   shapes: Shape[];
+  filters: FilterState;
   onFilterChange: (filters: FilterState) => void;
 }
 
@@ -50,53 +50,17 @@ export default function ProductFilters({
   categories,
   materials,
   shapes,
+  filters,
   onFilterChange,
 }: ProductFiltersProps) {
-  const searchParams = useSearchParams();
-
-  // Find initial category from URL param (by slug)
-  const getCategoryIdFromSlug = (slug: string | null): string => {
-    if (!slug) return 'all';
-    const category = categories.find(c => c.slug === slug);
-    return category?.id || 'all';
-  };
-
-  const [filters, setFilters] = useState<FilterState>({
-    category: getCategoryIdFromSlug(searchParams.get('categoria')),
-    brand: 'all',
-    material: 'all',
-    shape: 'all',
-    gender: 'all',
-    minPrice: 0,
-    maxPrice: 500,
-    sortBy: 'newest',
-    searchQuery: '',
-  });
-
   const [showFilters, setShowFilters] = useState(false);
 
-  // Apply initial filter on mount if URL has categoria param
-  useEffect(() => {
-    const categoriaSlug = searchParams.get('categoria');
-    if (categoriaSlug) {
-      const categoryId = getCategoryIdFromSlug(categoriaSlug);
-      if (categoryId !== 'all') {
-        const newFilters = { ...filters, category: categoryId };
-        setFilters(newFilters);
-        onFilterChange(newFilters);
-      }
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const handleFilterChange = (key: keyof FilterState, value: string | number) => {
-    const newFilters = { ...filters, [key]: value };
-    setFilters(newFilters);
-    onFilterChange(newFilters);
+    onFilterChange({ ...filters, [key]: value });
   };
 
   const resetFilters = () => {
-    const defaultFilters: FilterState = {
+    onFilterChange({
       category: 'all',
       brand: 'all',
       material: 'all',
@@ -106,9 +70,7 @@ export default function ProductFilters({
       maxPrice: 500,
       sortBy: 'newest',
       searchQuery: '',
-    };
-    setFilters(defaultFilters);
-    onFilterChange(defaultFilters);
+    });
   };
 
   return (
@@ -287,26 +249,6 @@ export default function ProductFilters({
               ))}
             </select>
           </div>
-
-          {/* Shape - Hidden until database is populated
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Forma
-            </label>
-            <select
-              value={filters.shape}
-              onChange={(e) => handleFilterChange('shape', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="all">Todas las Formas</option>
-              {shapes.map((shape) => (
-                <option key={shape.id} value={shape.id}>
-                  {shape.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          */}
 
           {/* Price Range */}
           <div>
